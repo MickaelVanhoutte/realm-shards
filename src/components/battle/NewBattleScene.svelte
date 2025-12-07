@@ -1230,4 +1230,125 @@
         background: rgba(0, 0, 0, 0.9);
         color: white;
     }
+
+    /* ... existing styles ... */
+    /* appending new styles correctly requires careful insertion or using a separate style block if the tool allows, 
+       but here I will append before the closing tag */
+
+    @media (max-width: 768px) {
+        .battle-screen {
+            font-size: 14px;
+        }
+
+        /* Timeline adjustments */
+        .timeline {
+            left: 5px;
+            transform: translateY(-50%) scale(0.8);
+            transform-origin: left center;
+        }
+
+        .timeline-item {
+            width: 30px;
+            height: 30px;
+        }
+
+        /* HUD Top adjustments */
+        .hud-top {
+            padding: 10px;
+            padding-left: 50px; /* Reduced padding */
+            gap: 10px;
+        }
+
+        .status-card {
+            padding: 5px 10px;
+            min-width: unset;
+            width: 100%;
+        }
+
+        .status-info {
+            font-size: 11px;
+        }
+
+        .hp-bar {
+            height: 6px;
+        }
+
+        /* Arena adjustments */
+        .sprite-container {
+            width: 120px;
+            height: 120px;
+        }
+
+        .creature-sprite,
+        .trainer-sprite {
+            width: 100px;
+            height: 100px;
+        }
+
+        /* HUD Bottom adjustments */
+        .hud-bottom {
+            flex-direction: column;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .dialogue-box {
+            width: 100%;
+            height: 80px; /* Fixed smaller height */
+            margin-bottom: 0;
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        .message {
+            font-size: 14px;
+        }
+
+        .action-menu {
+            width: 100%;
+        }
+
+        .menu-stack {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .sub-menu.targets {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            width: auto;
+            z-index: 200;
+        }
+
+        .menu-btn {
+            width: 48%; /* 2 per row */
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+            transform: none; /* Remove skew on mobile for cleaner look/space */
+            box-shadow: none;
+            border-right: none;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-2px);
+            width: 48%;
+        }
+
+        .sub-menu.moves {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+
+        .move-btn {
+            padding: 8px;
+            font-size: 12px;
+        }
+    }
 </style>
