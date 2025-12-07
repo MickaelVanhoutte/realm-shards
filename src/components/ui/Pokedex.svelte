@@ -1151,8 +1151,291 @@
     }
 
     .tab.active {
-        background: rgba(255, 255, 255, 0.9);
+        background: linear-gradient(135deg, #f39c12, #e67e22);
         border-color: transparent;
-        color: #2c3e50;
+        color: white;
+        box-shadow: 0 2px 10px rgba(243, 156, 18, 0.4);
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        /* List View */
+        .pokedex-list {
+            padding: 15px;
+        }
+
+        .list-close {
+            top: 10px;
+            left: 10px;
+        }
+
+        .close-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 1.2rem;
+        }
+
+        .filter-bar {
+            flex-direction: column;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .type-filter,
+        .search-input {
+            width: 100%;
+            min-width: unset;
+        }
+
+        .list-content {
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
+        .preview-panel {
+            display: none; /* Hide preview on mobile */
+        }
+
+        .pokemon-list {
+            flex: 1;
+            padding-right: 0;
+        }
+
+        .pokemon-row {
+            padding: 12px 15px;
+        }
+
+        .row-name {
+            font-size: 0.9rem;
+        }
+
+        /* Detail View */
+        .detail-header {
+            padding: 10px 15px;
+        }
+
+        .pokemon-name {
+            font-size: 1.2rem;
+        }
+
+        .nav-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
+        }
+
+        .detail-content {
+            padding: 15px;
+        }
+
+        /* Stats Layout - Single Column */
+        .stats-layout {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .info-column {
+            order: 2;
+            gap: 12px;
+        }
+
+        .sprite-column {
+            order: 1;
+        }
+
+        .pokemon-sprite {
+            width: 150px;
+            height: 150px;
+        }
+
+        .stats-column {
+            order: 3;
+            gap: 8px;
+        }
+
+        .stat-bar-container {
+            height: 14px;
+        }
+
+        .stat-value {
+            width: 35px;
+            font-size: 0.9rem;
+        }
+
+        .stat-label {
+            width: 50px;
+            font-size: 0.85rem;
+        }
+
+        /* More Layout */
+        .more-layout {
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .weakness-section h3,
+        .evolution-section h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .type-icon {
+            width: 26px;
+            height: 26px;
+            font-size: 0.8rem;
+        }
+
+        .evo-sprite {
+            width: 80px;
+            height: 80px;
+        }
+
+        .evo-name {
+            font-size: 0.8rem;
+        }
+
+        .evo-arrow {
+            font-size: 1.2rem;
+        }
+
+        /* Moves Layout */
+        .moves-table {
+            overflow-x: auto;
+        }
+
+        .moves-header {
+            grid-template-columns: 40px 1fr 50px 50px 50px 50px 40px;
+            padding: 10px 12px;
+            font-size: 0.7rem;
+            min-width: 380px;
+        }
+
+        .move-row {
+            grid-template-columns: 40px 1fr 50px 50px 50px 50px 40px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            min-width: 380px;
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            padding: 12px;
+            gap: 8px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            min-height: 44px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .pokedex-list {
+            padding: 10px;
+        }
+
+        .list-close {
+            top: 8px;
+            left: 8px;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+        }
+
+        .filter-bar {
+            padding: 8px;
+        }
+
+        .type-filter,
+        .search-input {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+
+        .pokemon-row {
+            padding: 10px 12px;
+        }
+
+        .row-name {
+            font-size: 0.85rem;
+        }
+
+        .detail-header {
+            padding: 8px 12px;
+        }
+
+        .pokemon-name {
+            font-size: 1rem;
+        }
+
+        .detail-content {
+            padding: 10px;
+        }
+
+        .pokemon-sprite {
+            width: 120px;
+            height: 120px;
+        }
+
+        .info-row {
+            gap: 3px;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+        }
+
+        .ability-badge {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .type-badge {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .stat-bar-container {
+            height: 12px;
+        }
+
+        .stat-value {
+            width: 30px;
+            font-size: 0.8rem;
+        }
+
+        .stat-label {
+            width: 45px;
+            font-size: 0.75rem;
+        }
+
+        .type-icon {
+            width: 22px;
+            height: 22px;
+            font-size: 0.7rem;
+        }
+
+        .evo-sprite {
+            width: 60px;
+            height: 60px;
+        }
+
+        .tab-bar {
+            padding: 10px;
+            gap: 5px;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            font-size: 0.75rem;
+        }
     }
 </style>

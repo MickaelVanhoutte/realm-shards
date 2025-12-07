@@ -9,6 +9,7 @@
     import type { MapData, Direction } from "../../lib/types";
     import Pokedex from "../ui/Pokedex.svelte";
     import PartyMenu from "../ui/PartyMenu.svelte";
+    import TrainerSkillTree from "../ui/TrainerSkillTree.svelte";
     import { pokedex } from "../../lib/data/pokedex";
 
     const playerSpritePath = `${import.meta.env.BASE_URL}sprites/trainers/walking/ethan.png`;
@@ -19,6 +20,7 @@
     let showLoadMenu = false;
     let showPokedex = false;
     let showPartyMenu = false;
+    let showSkillTree = false;
 
     let currentMap: MapData = STARTER_MAP;
     let isMobile = false;
@@ -114,6 +116,7 @@
                 showPokedex = false;
                 showSaveMenu = false;
                 showLoadMenu = false;
+                showSkillTree = false;
             }
             return;
         }
@@ -359,6 +362,15 @@
                     class="pause-btn"
                     on:click={() => {
                         showPauseMenu = false;
+                        showSkillTree = true;
+                    }}
+                >
+                    🌟 Skills
+                </button>
+                <button
+                    class="pause-btn"
+                    on:click={() => {
+                        showPauseMenu = false;
                         showLoadMenu = true;
                     }}
                 >
@@ -395,6 +407,9 @@
             isOpen={showPartyMenu}
             on:close={() => (showPartyMenu = false)}
         />
+    {/if}
+    {#if showSkillTree}
+        <TrainerSkillTree onClose={() => (showSkillTree = false)} />
     {/if}
 
     <!-- Floating Joystick -->

@@ -395,7 +395,7 @@
     }
 
     .tab.active {
-        background: #f39c12;
+        background: linear-gradient(135deg, #f39c12, #e67e22);
         color: white;
         box-shadow: 0 2px 10px rgba(243, 156, 18, 0.4);
     }
@@ -741,5 +741,244 @@
         height: 100%;
         object-fit: contain;
         image-rendering: pixelated;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .party-menu {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 0;
+            border: none;
+        }
+
+        .menu-header {
+            padding: 10px 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .creature-name {
+            font-size: 1.1rem;
+            min-width: auto;
+            order: 1;
+            flex: 1;
+        }
+
+        .tabs {
+            order: 3;
+            width: 100%;
+            justify-content: center;
+            margin-top: 5px;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            font-size: 0.75rem;
+            min-height: 36px;
+        }
+
+        .nav-buttons {
+            order: 2;
+            margin-left: auto;
+            gap: 8px;
+        }
+
+        .nav-btn,
+        .close-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+
+        .menu-content {
+            flex-direction: column;
+        }
+
+        .sprite-panel {
+            width: 100%;
+            min-width: unset;
+            padding: 15px;
+            border-right: none;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .sprite-container {
+            width: 120px;
+            height: 120px;
+        }
+
+        .creature-sprite {
+            width: 100px;
+            height: 100px;
+        }
+
+        .ability-box {
+            margin-top: 0;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+        }
+
+        .level-badge {
+            margin-top: 0;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        .info-panel {
+            padding: 15px;
+        }
+
+        .info-row {
+            padding: 6px 0;
+        }
+
+        .info-label {
+            width: 100px;
+            font-size: 0.8rem;
+        }
+
+        .info-value {
+            font-size: 0.9rem;
+        }
+
+        /* Stats table adjustments */
+        .stats-header {
+            grid-template-columns: 70px 80px 1fr;
+            padding: 8px;
+            font-size: 0.7rem;
+        }
+
+        .stat-row {
+            grid-template-columns: 70px 80px 1fr;
+            padding: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 0.9rem;
+        }
+
+        .stat-bar-container {
+            height: 8px;
+        }
+
+        /* Moves list adjustments */
+        .move-card {
+            grid-template-columns: 65px 1fr auto;
+            gap: 10px;
+            padding: 10px 12px;
+        }
+
+        .move-type-badge {
+            padding: 3px 6px;
+            font-size: 0.6rem;
+        }
+
+        .move-name {
+            font-size: 0.85rem;
+        }
+
+        .move-category {
+            font-size: 0.7rem;
+        }
+
+        .move-power,
+        .move-pp {
+            font-size: 0.75rem;
+        }
+
+        /* Party indicator */
+        .party-indicator {
+            padding: 10px;
+            gap: 8px;
+        }
+
+        .party-dot {
+            width: 44px;
+            height: 44px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .menu-header {
+            padding: 8px 12px;
+        }
+
+        .creature-name {
+            font-size: 1rem;
+        }
+
+        .tabs {
+            gap: 3px;
+        }
+
+        .tab {
+            padding: 6px 12px;
+            font-size: 0.7rem;
+        }
+
+        .sprite-panel {
+            padding: 10px;
+            flex-wrap: wrap;
+        }
+
+        .sprite-container {
+            width: 100px;
+            height: 100px;
+        }
+
+        .creature-sprite {
+            width: 80px;
+            height: 80px;
+        }
+
+        .ability-box {
+            display: none; /* Hide on very small screens */
+        }
+
+        .info-panel {
+            padding: 10px;
+        }
+
+        .info-label {
+            width: 80px;
+            font-size: 0.75rem;
+        }
+
+        .info-value {
+            font-size: 0.85rem;
+        }
+
+        .type-badge {
+            padding: 3px 8px;
+            font-size: 0.65rem;
+        }
+
+        .exp-bar {
+            height: 8px;
+        }
+
+        .exp-text {
+            font-size: 0.7rem;
+        }
+
+        .description {
+            padding: 10px;
+            font-size: 0.8rem;
+        }
+
+        .party-dot {
+            width: 38px;
+            height: 38px;
+        }
     }
 </style>

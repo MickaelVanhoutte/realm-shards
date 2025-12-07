@@ -68,6 +68,8 @@ function createNewBattleStore() {
         animating: false,
         damageNumbers: [],
         log: [],
+        turnNumber: 1,
+        trainerActionInterval: 5,
         participation: {}
     };
 
@@ -200,12 +202,18 @@ function createNewBattleStore() {
                 animating: false,
                 damageNumbers: [],
                 log: [`Wild ${wildCreatures.map(c => c.nickname || getSpecies(c.speciesId)?.name).join(', ')} appeared!`],
+                turnNumber: 1,
+                trainerActionInterval: 5,  // TODO: Read from trainer skills
                 participation: {}
             });
 
-            // Transition to trainer select after delay
+            // Transition to appropriate selection phase after delay
             setTimeout(() => {
-                update(s => ({ ...s, phase: 'trainer_select' }));
+                update(s => {
+                    // Check if trainer acts this turn (turn 1 always yes for wild battles)
+                    const isTrainerTurn = s.turnNumber === 1 || s.turnNumber % s.trainerActionInterval === 1;
+                    return { ...s, phase: isTrainerTurn ? 'trainer_select' : 'creature_select' };
+                });
             }, 1500);
         },
 
@@ -234,11 +242,17 @@ function createNewBattleStore() {
                 animating: false,
                 damageNumbers: [],
                 log: [enemyTrainer.dialogue?.intro || `${enemyTrainer.name} wants to battle!`],
+                turnNumber: 1,
+                trainerActionInterval: 5,  // TODO: Read from trainer skills
                 participation: {}
             });
 
             setTimeout(() => {
-                update(s => ({ ...s, phase: 'trainer_select' }));
+                update(s => {
+                    // Check if trainer acts this turn
+                    const isTrainerTurn = s.turnNumber === 1 || s.turnNumber % s.trainerActionInterval === 1;
+                    return { ...s, phase: isTrainerTurn ? 'trainer_select' : 'creature_select' };
+                });
             }, 1500);
         },
 
@@ -296,8 +310,11 @@ function createNewBattleStore() {
             // Build action queue
             const queue: Array<{ participant: BattleParticipant; action: any; priority: number }> = [];
 
-            // 1. Player trainer (priority 1000)
-            if (state.currentTurnPlan.trainerAction) {
+            // Check if trainer acts this turn (turn 1, then every N turns)
+            const isTrainerTurn = state.turnNumber === 1 || state.turnNumber % state.trainerActionInterval === 1;
+
+            // 1. Player trainer (priority 1000) - only on trainer turns
+            if (state.currentTurnPlan.trainerAction && isTrainerTurn) {
                 queue.push({
                     participant: {
                         id: state.playerTrainer.id,
@@ -572,6 +589,9 @@ function createNewBattleStore() {
                     }
                 }
             }
+
+            // Increment turn counter
+            update(s => ({ ...s, turnNumber: s.turnNumber + 1 }));
 
             // Check battle end conditions
             checkBattleEnd();
@@ -976,6 +996,17 @@ function createNewBattleStore() {
                                 const xpAmount = calculateExpGain(target, participatingCreatures.length, !state.isWildBattle);
                                 for (const participant of participatingCreatures) {
                                     gainExp(participant, xpAmount);
+                                }
+                            }
+
+                            // Also award XP to trainer (30% of creature XP)
+                            const trainerXp = Math.floor(calculateExpGain(target, 1, !state.isWildBattle) * 0.3);
+                            if (trainerXp > 0) {
+                                const result = trainerStore.addExp(trainerXp);
+                                addLog(`Trainer gained ${trainerXp} Exp. Points!`);
+                                if (result.leveledUp) {
+                                    addLog(`Trainer leveled up to Lv. ${result.newLevel}!`);
+                                    addLog(`Trainer gained 1 Skill Point!`);
                                 }
                             }
                         }

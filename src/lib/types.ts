@@ -63,6 +63,16 @@ export interface TrainerSkill {
     cost: number;              // Skill points to unlock
     effect: 'buff' | 'heal' | 'capture' | 'command';
     prerequisites: string[];   // Required skill IDs
+    branch?: 'warlord' | 'commander' | 'ranger' | 'elementalist' | 'tactician';
+    tier?: 1 | 2 | 3;
+    passive?: boolean;         // true = always active, false = activated on trainer turn
+    effectData?: {
+        type: string;
+        stat?: string;
+        value?: number;
+        duration?: number;
+        elementType?: string;
+    };
 }
 
 // ===== Creatures (Catchable Monsters) =====
@@ -262,6 +272,10 @@ export interface BattleState {
     damageNumbers: DamageNumber[];
     currentActorId?: string;
     log: string[];
+
+    // Turn tracking
+    turnNumber: number;             // Current turn count (starts at 1)
+    trainerActionInterval: number;  // Trainer acts every N turns (default 5)
 
     // XP Tracking
     // Map<EnemyId, Set<PlayerCreatureId>> - tracks who fought whom

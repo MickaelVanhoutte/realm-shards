@@ -300,7 +300,10 @@
             <!-- Top HUD (Health Bars) -->
             <div class="hud-top">
                 <!-- Player Status (Top Left) -->
-                <div class="status-group player">
+                <div
+                    class="status-group player"
+                    class:compact={battle.activeCreatures.length >= 3}
+                >
                     <!-- Trainer Status -->
                     {#if trainer}
                         <div class="status-card trainer">
@@ -394,7 +397,10 @@
                 </div>
 
                 <!-- Enemy Status (Top Right) -->
-                <div class="status-group enemy">
+                <div
+                    class="status-group enemy"
+                    class:compact={battle.enemyCreatures.length >= 3}
+                >
                     {#each battle.enemyCreatures as enemy}
                         <div class="status-card enemy">
                             <div class="status-info">
@@ -855,7 +861,6 @@
         display: flex;
         justify-content: space-between;
         width: 100%;
-        padding: 20px;
         gap: 20px;
         padding-left: 80px; /* Make room for timeline */
     }
@@ -866,6 +871,33 @@
         flex-direction: column; /* Stack vertically if needed, or row with wrap */
         gap: 10px;
         max-width: 45%; /* Limit width to prevent overlap */
+    }
+
+    /* Compact mode for 3+ party members */
+    .status-group.compact {
+        gap: 5px;
+    }
+
+    .status-group.compact .status-card {
+        padding: 5px 10px;
+        min-width: 150px;
+    }
+
+    .status-group.compact .status-info {
+        font-size: 11px;
+    }
+
+    .status-group.compact .hp-bar {
+        height: 6px;
+    }
+
+    .status-group.compact .hp-text {
+        font-size: 0.55rem;
+    }
+
+    .status-group.compact .xp-bar-container {
+        height: 2px;
+        margin-top: 2px;
     }
 
     .status-card {
@@ -1033,21 +1065,27 @@
         justify-content: space-between;
         align-items: flex-end;
         padding: 0;
+        height: 60%;
     }
 
     /* Dialogue Box */
     .dialogue-box {
         background: rgba(0, 0, 0, 0.8);
+        /* background-color: gradient from top left to bottom right, dark to lighter */
+        background: linear-gradient(
+            to bottom right,
+            rgba(0, 0, 0, 1),
+            rgba(0, 0, 0, 0.6)
+        );
         padding: 20px 40px;
         width: 60%;
-        height: 18dvh;
+        height: 50%;
         clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
         color: white;
         display: flex;
         align-items: flex-start;
         pointer-events: auto;
         border-left: 5px solid #fff;
-        margin-bottom: 10px;
         position: relative;
         z-index: 20;
         flex-direction: column;
@@ -1064,7 +1102,8 @@
 
     /* Action Menu */
     .action-menu {
-        width: 30%;
+        max-width: 35%;
+        max-height: 90%;
         pointer-events: auto;
     }
 
@@ -1073,11 +1112,12 @@
         flex-direction: column;
         gap: 10px;
         align-items: flex-end;
+        flex-wrap: wrap;
     }
 
     .menu-btn {
         width: 100%;
-        padding: 15px 30px;
+        padding: 8px 24px;
         border: none;
         color: white;
         font-size: 18px;
@@ -1240,37 +1280,65 @@
             font-size: 14px;
         }
 
-        /* Timeline adjustments */
+        /* Timeline adjustments - move to top on mobile */
         .timeline {
+            position: fixed;
             left: 5px;
-            transform: translateY(-50%) scale(0.8);
-            transform-origin: left center;
+            top: 10px;
+            transform: none;
+            flex-direction: row;
+            gap: 8px;
+            z-index: 200;
+        }
+
+        .timeline-header {
+            display: none;
         }
 
         .timeline-item {
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
+            border-width: 2px;
         }
 
         /* HUD Top adjustments */
         .hud-top {
-            padding: 10px;
-            padding-left: 50px; /* Reduced padding */
             gap: 10px;
+            padding-left: 10px;
+            padding-top: 50px; /* Space for timeline */
+            flex-wrap: wrap;
+        }
+
+        .status-group {
+            max-width: 48%;
         }
 
         .status-card {
-            padding: 5px 10px;
+            padding: 6px 10px;
             min-width: unset;
             width: 100%;
+            transform: skewX(-10deg); /* Less skew on mobile */
         }
 
         .status-info {
             font-size: 11px;
+            transform: skewX(10deg);
+        }
+
+        .hp-container {
+            transform: skewX(10deg);
         }
 
         .hp-bar {
             height: 6px;
+        }
+
+        .hp-text {
+            font-size: 0.6rem;
+        }
+
+        .xp-bar-container {
+            height: 3px;
         }
 
         /* Arena adjustments */
@@ -1279,39 +1347,85 @@
             height: 120px;
         }
 
-        .creature-sprite,
-        .trainer-sprite {
+        .creature-sprite {
             width: 100px;
             height: 100px;
+            bottom: 15px;
+        }
+
+        .trainer-sprite {
+            width: 80px;
+            height: 80px;
+            bottom: 15px;
         }
 
         /* HUD Bottom adjustments */
         .hud-bottom {
             flex-direction: column;
-            padding: 10px;
-            gap: 10px;
+            gap: 8px;
+            height: auto;
+            max-height: 55%;
         }
 
         .dialogue-box {
             width: 100%;
-            height: 80px; /* Fixed smaller height */
-            margin-bottom: 0;
+            height: auto;
+            min-height: 60px;
+            max-height: 80px;
+            clip-path: none;
+            padding: 10px 15px;
             font-size: 14px;
-            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 5px;
         }
 
         .message {
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .action-menu {
             width: 100%;
+            max-width: 100%;
+            max-height: none;
         }
 
         .menu-stack {
             flex-direction: row;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .menu-btn {
+            width: 48%;
+            min-height: 44px; /* Touch target */
+            font-size: 14px;
+            text-align: center;
+            padding: 10px 16px;
+            transform: none;
+            box-shadow: none;
+            border-right: none;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+        }
+
+        .menu-btn:hover,
+        .menu-btn:active {
+            transform: translateY(-2px);
+            width: 48%;
+        }
+
+        .sub-menu.moves {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .move-btn {
+            padding: 10px;
+            font-size: 12px;
+            min-height: 44px;
+            border-radius: 6px;
         }
 
         .sub-menu.targets {
@@ -1321,34 +1435,118 @@
             right: 10px;
             width: auto;
             z-index: 200;
-        }
-
-        .menu-btn {
-            width: 48%; /* 2 per row */
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 8px;
             padding: 10px;
-            font-size: 14px;
-            text-align: center;
-            transform: none; /* Remove skew on mobile for cleaner look/space */
-            box-shadow: none;
-            border-right: none;
-            border-bottom: 3px solid rgba(0, 0, 0, 0.3);
-            border-radius: 5px;
         }
 
-        .menu-btn:hover {
-            transform: translateY(-2px);
-            width: 48%;
+        .menu-header {
+            font-size: 12px;
+            padding: 6px;
         }
 
-        .sub-menu.moves {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        /* Level Up Popup */
+        .level-up-popup {
+            padding: 15px;
+            min-width: 260px;
+            width: 90%;
+            max-width: 320px;
+        }
+
+        .level-up-content h3 {
+            font-size: 1.2rem;
+        }
+
+        .level-change {
+            font-size: 1rem;
+        }
+
+        .stat-row {
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Extra small screens (phones in portrait) */
+    @media (max-width: 480px) {
+        .hud-top {
+            flex-direction: column;
+            padding-top: 45px;
             gap: 5px;
         }
 
-        .move-btn {
-            padding: 8px;
+        .status-group {
+            max-width: 100%;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .status-card {
+            padding: 4px 8px;
+            transform: none;
+            border-radius: 4px;
+        }
+
+        .status-info {
+            transform: none;
+            font-size: 10px;
+        }
+
+        .hp-container {
+            transform: none;
+        }
+
+        .hp-bar {
+            height: 5px;
+        }
+
+        .hp-text {
+            display: none; /* Hide text on very small screens */
+        }
+
+        .xp-bar-container {
+            display: none; /* Hide XP on very small screens */
+        }
+
+        .sprite-container {
+            width: 90px;
+            height: 90px;
+        }
+
+        .creature-sprite {
+            width: 80px;
+            height: 80px;
+        }
+
+        .trainer-sprite {
+            width: 64px;
+            height: 64px;
+        }
+
+        .dialogue-box {
+            padding: 8px 12px;
+            min-height: 50px;
+            max-height: 60px;
+        }
+
+        .message {
             font-size: 12px;
+        }
+
+        .menu-btn {
+            font-size: 12px;
+            padding: 8px 12px;
+            min-height: 40px;
+        }
+
+        .move-btn {
+            font-size: 11px;
+            padding: 8px;
+            min-height: 40px;
+        }
+
+        .timeline-item {
+            width: 28px;
+            height: 28px;
         }
     }
 </style>
