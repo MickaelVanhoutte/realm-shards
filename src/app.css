@@ -1,0 +1,222 @@
+/* ===== Realm Shards - Global Styles ===== */
+
+:root {
+  /* Color Palette - Dark Fantasy */
+  --bg-dark: #0d1117;
+  --bg-medium: #161b22;
+  --bg-light: #21262d;
+  --bg-panel: #1a1f2e;
+
+  --primary: #e94560;
+  --primary-dark: #c73e54;
+  --secondary: #0f3460;
+  --accent: #533483;
+  --accent-light: #7b4eb8;
+
+  --text-primary: #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+
+  --hp-bar: #2ea043;
+  --hp-bar-low: #da3633;
+  --mp-bar: #58a6ff;
+  --exp-bar: #f0e68c;
+
+  --success: #2ea043;
+  --warning: #d29922;
+  --danger: #f85149;
+
+  /* Typography - responsive */
+  --font-pixel: 'Press Start 2P', cursive;
+  --font-ui: system-ui, -apple-system, sans-serif;
+  --font-size-base: clamp(8px, 2vw, 12px);
+  --font-size-sm: clamp(6px, 1.5vw, 9px);
+  --font-size-lg: clamp(12px, 3vw, 16px);
+  --font-size-xl: clamp(16px, 4vw, 24px);
+  --font-size-title: clamp(20px, 5vw, 32px);
+
+  /* Spacing - responsive */
+  --space-xs: clamp(2px, 0.5vw, 4px);
+  --space-sm: clamp(4px, 1vw, 8px);
+  --space-md: clamp(8px, 2vw, 16px);
+  --space-lg: clamp(12px, 3vw, 24px);
+  --space-xl: clamp(16px, 4vw, 32px);
+
+  /* Touch-friendly minimum sizes */
+  --touch-min: 44px;
+
+  /* Borders */
+  --border-pixel: 2px solid var(--text-primary);
+  --border-panel: 2px solid var(--bg-light);
+
+  /* Shadows */
+  --shadow-glow: 0 0 20px rgba(233, 69, 96, 0.3);
+  --shadow-panel: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
+body {
+  font-family: var(--font-pixel);
+  font-size: var(--font-size-base);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  line-height: 1.6;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background:
+    radial-gradient(ellipse at center, var(--bg-medium) 0%, var(--bg-dark) 100%);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Utility Classes */
+.pixel-border {
+  border: var(--border-pixel);
+  box-shadow:
+    inset -2px -2px 0 0 var(--bg-light),
+    inset 2px 2px 0 0 var(--text-secondary);
+}
+
+.pixel-text {
+  font-family: var(--font-pixel);
+  text-shadow: 2px 2px 0 var(--bg-dark);
+}
+
+/* Touch-friendly button base */
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+/* Animations */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes flash {
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(2);
+  }
+}
+
+@keyframes damage-text {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.8);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+.animate-float {
+  animation: float 2s ease-in-out infinite;
+}
+
+.animate-flash {
+  animation: flash 0.2s ease-in-out;
+}
+
+/* Mobile-specific overrides */
+@media (max-width: 768px) {
+  :root {
+    --touch-min: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --touch-min: 52px;
+  }
+}
+
+/* Landscape phone */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --font-size-base: 8px;
+    --font-size-sm: 6px;
+    --space-sm: 4px;
+    --space-md: 6px;
+  }
+}
