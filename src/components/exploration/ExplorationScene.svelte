@@ -11,7 +11,7 @@
     import PartyMenu from "../ui/PartyMenu.svelte";
     import { pokedex } from "../../lib/data/pokedex";
 
-    import playerSprite from "../../assets/sprites/trainers/walking/ethan.png";
+    const playerSpritePath = `${import.meta.env.BASE_URL}sprites/trainers/walking/ethan.png`;
 
     // Menu state
     let showPauseMenu = false;
@@ -262,7 +262,7 @@
                 <div
                     class="player-sprite-sheet"
                     style="
-                        background-image: url({playerSprite});
+                        background-image: url({playerSpritePath});
                         background-position: {getBackgroundPosition(
                         $playerStore.direction,
                         walkingFrame,

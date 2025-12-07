@@ -145,7 +145,7 @@ export class Pokedex {
         const folder = type === 'front' ? 'sprites' : 'sprites-back';
         // Shiny logic could be added here if we have shiny assets
         // For now assuming standard assets
-        return `src/assets/sprites/monsters/static/${folder}/${name}.png`;
+        return `${import.meta.env.BASE_URL}sprites/monsters/static/${folder}/${name}.png`;
     }
 
     public getPokemon(id: number): PokedexEntryJSON | undefined {

@@ -1,7 +1,7 @@
 // Trainer Data and Skills
 import type { Trainer, TrainerSkill, Creature } from '../types';
 import { createCreature } from './creatures';
-import trainerSprite from '../../assets/sprites/trainers/throwing/ethan.png';
+const trainerSprite = `${import.meta.env.BASE_URL}sprites/trainers/throwing/ethan.png`;
 
 // ===== Trainer Skills =====
 export const TRAINER_SKILLS: Record<string, TrainerSkill> = {
