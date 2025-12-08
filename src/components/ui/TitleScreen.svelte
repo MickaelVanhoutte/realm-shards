@@ -9,7 +9,12 @@
     let showStarterSelect = false;
     let playerName = "Trainer";
 
-    const STARTERS = ["helioptile", "jynx", "gastly"];
+    // Get starters from species with isStarter flag, fallback to defaults if none defined
+    const DEFAULT_STARTERS = ["helioptile", "jynx", "gastly"];
+    $: STARTERS = Object.values(CREATURE_SPECIES)
+        .filter((s) => s.isStarter)
+        .map((s) => s.id);
+    $: activeStarters = STARTERS.length >= 3 ? STARTERS : DEFAULT_STARTERS;
 
     $: hasSaves = $saveStore.some((s) => !s.isEmpty);
 
@@ -53,7 +58,7 @@
             <div class="starter-select">
                 <h2>Choose your first creature!</h2>
                 <div class="starter-grid">
-                    {#each STARTERS as speciesId}
+                    {#each activeStarters as speciesId}
                         {@const species = CREATURE_SPECIES[speciesId]}
                         {#if species}
                             <button

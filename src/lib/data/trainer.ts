@@ -220,7 +220,7 @@ export function createTrainer(name: string, starterSpeciesId: string): Trainer {
         name,
         sprite: trainerSprite,
         avatar: trainerSprite, // Using same sprite for now, could be cropped
-        level: 1,
+        level: 10,
         exp: 0,
         expToNextLevel: 100,
         stats: {
@@ -229,7 +229,7 @@ export function createTrainer(name: string, starterSpeciesId: string): Trainer {
         },
         currentHp: 50,
         maxHp: 50,
-        skillPoints: 1,  // Start with 1 point
+        skillPoints: 10,  // Start with 1 point
         unlockedSkills: [],
         party: [starter],
         pcBox: []

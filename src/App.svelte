@@ -1,26 +1,40 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { gameState } from "./lib/stores/gameState";
   import NewBattleScene from "./components/battle/NewBattleScene.svelte";
   import TitleScreen from "./components/ui/TitleScreen.svelte";
   import ExplorationScene from "./components/exploration/ExplorationScene.svelte";
+  import AdminPokedex from "./components/admin/AdminPokedex.svelte";
+
+  // Check if we're on the admin route
+  let isAdminRoute = false;
+
+  onMount(() => {
+    const path = window.location.pathname;
+    isAdminRoute = path.endsWith("/admin") || path.endsWith("/admin/");
+  });
 </script>
 
-<main class="game-container">
-  {#if $gameState.screen === "title"}
-    <TitleScreen />
-  {:else if $gameState.screen === "battle"}
-    <NewBattleScene />
-  {:else if $gameState.screen === "exploration"}
-    <ExplorationScene />
-  {:else}
-    <div class="placeholder">
-      <h2>Unknown Screen</h2>
-      <button on:click={() => gameState.setScreen("title")}>
-        Return to Title
-      </button>
-    </div>
-  {/if}
-</main>
+{#if isAdminRoute}
+  <AdminPokedex />
+{:else}
+  <main class="game-container">
+    {#if $gameState.screen === "title"}
+      <TitleScreen />
+    {:else if $gameState.screen === "battle"}
+      <NewBattleScene />
+    {:else if $gameState.screen === "exploration"}
+      <ExplorationScene />
+    {:else}
+      <div class="placeholder">
+        <h2>Unknown Screen</h2>
+        <button on:click={() => gameState.setScreen("title")}>
+          Return to Title
+        </button>
+      </div>
+    {/if}
+  </main>
+{/if}
 
 <style>
   .game-container {

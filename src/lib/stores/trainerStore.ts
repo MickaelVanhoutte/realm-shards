@@ -137,6 +137,17 @@ function createTrainerStore() {
             update(state => {
                 if (state.trainer) {
                     success = unlockSkill(state.trainer, skillId);
+                    if (success) {
+                        // Return a new state object to trigger reactivity
+                        return {
+                            ...state,
+                            trainer: {
+                                ...state.trainer,
+                                skillPoints: state.trainer.skillPoints,
+                                unlockedSkills: [...state.trainer.unlockedSkills]
+                            }
+                        };
+                    }
                 }
                 return state;
             });
@@ -241,6 +252,29 @@ function createTrainerStore() {
             const state = get({ subscribe });
             const item = state.inventory.items.find(i => i.itemId === itemId);
             return item?.quantity || 0;
+        },
+
+        // Update a creature (for skill tree changes, etc.)
+        updateCreature: (creature: Creature): void => {
+            update(state => {
+                if (!state.trainer) return state;
+
+                // Find and update in party
+                const partyIndex = state.trainer.party.findIndex(c => c.id === creature.id);
+                if (partyIndex >= 0) {
+                    state.trainer.party[partyIndex] = { ...creature };
+                    return { ...state };
+                }
+
+                // Find and update in PC box
+                const boxIndex = state.trainer.pcBox.findIndex(c => c.id === creature.id);
+                if (boxIndex >= 0) {
+                    state.trainer.pcBox[boxIndex] = { ...creature };
+                    return { ...state };
+                }
+
+                return state;
+            });
         },
 
         // Full heal (rest at save point)

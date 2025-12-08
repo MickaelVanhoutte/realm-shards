@@ -840,53 +840,43 @@ function createNewBattleStore() {
 
         // Check for level up
         while (creature.exp >= creature.expToNextLevel && creature.level < 100) {
+            const oldLevel = creature.level;
             creature.level++;
             addLog(`${creature.nickname || getSpecies(creature.speciesId)?.name} grew to Lv. ${creature.level}!`);
 
-            // Update stats
-            const species = getSpecies(creature.speciesId);
-            if (species) {
-                const oldStats = { ...creature.stats };
-
-                // Simplified stat growth - recalculate based on new level
-                // In a real game, we'd use IVs and EVs
-                const calculateStat = (base: number, level: number) => Math.floor(((2 * base * level) / 100) + 5);
-                const calculateHp = (base: number, level: number) => Math.floor(((2 * base * level) / 100) + level + 10);
-
-                const oldMaxHp = creature.maxHp;
-                creature.maxHp = calculateHp(species.baseStats.hp, creature.level);
-                creature.currentHp += (creature.maxHp - oldMaxHp); // Heal the difference
-
-                creature.stats = {
-                    hp: creature.maxHp,
-                    atk: calculateStat(species.baseStats.atk, creature.level),
-                    def: calculateStat(species.baseStats.def, creature.level),
-                    spAtk: calculateStat(species.baseStats.spAtk, creature.level),
-                    spDef: calculateStat(species.baseStats.spDef, creature.level),
-                    speed: calculateStat(species.baseStats.speed, creature.level)
-                };
-
-                // Trigger Level Up Event
-                update(s => ({
-                    ...s,
-                    levelUpEvent: {
-                        creatureId: creature.id,
-                        oldStats,
-                        newStats: { ...creature.stats },
-                        level: creature.level
-                    }
-                }));
-
-                // Clear event after delay
-                setTimeout(() => {
-                    update(s => {
-                        if (s.levelUpEvent?.creatureId === creature.id) {
-                            return { ...s, levelUpEvent: undefined };
-                        }
-                        return s;
-                    });
-                }, 3000);
+            // Grant skill points: 1 per level + 1 bonus every 10 levels
+            let pointsGained = 1;
+            if (creature.level % 10 === 0) {
+                pointsGained = 2;
             }
+            creature.skillPoints += pointsGained;
+            addLog(`Gained ${pointsGained} Skill Point${pointsGained > 1 ? 's' : ''}!`);
+
+            // Record old stats for display
+            const oldStats = { ...creature.stats };
+
+            // Trigger Level Up Event (shows old vs current stats)
+            // Stats are now from skill tree, so they don't change on level up
+            // This UI can show "No stat change - allocate skill points!"
+            update(s => ({
+                ...s,
+                levelUpEvent: {
+                    creatureId: creature.id,
+                    oldStats,
+                    newStats: { ...creature.stats },
+                    level: creature.level
+                }
+            }));
+
+            // Clear event after delay
+            setTimeout(() => {
+                update(s => {
+                    if (s.levelUpEvent?.creatureId === creature.id) {
+                        return { ...s, levelUpEvent: undefined };
+                    }
+                    return s;
+                });
+            }, 3000);
 
             // Update next level requirement
             const speciesData = getSpecies(creature.speciesId);
@@ -894,30 +884,8 @@ function createNewBattleStore() {
                 creature.expToNextLevel = pokedex.getExperience(speciesData.growthRateId || 4, creature.level + 1);
             }
 
-            // Check for new moves
-            if (species) {
-                console.log(`[Level Up] Checking moves for ${species.name} at level ${creature.level}`);
-                console.log(`[Level Up] Species learnable moves:`, species.learnableMoves);
-                const newMoves = species.learnableMoves.filter(m => m.level === creature.level);
-                console.log(`[Level Up] New moves at level ${creature.level}:`, newMoves);
-                for (const move of newMoves) {
-                    console.log(`[Level Up] Processing move:`, move.moveId, 'Already knows:', creature.moves.includes(move.moveId));
-                    if (!creature.moves.includes(move.moveId)) {
-                        if (creature.moves.length < 4) {
-                            creature.moves.push(move.moveId);
-                            const moveName = getMove(move.moveId)?.name || move.moveId;
-                            addLog(`${creature.nickname || species.name} learned ${moveName}!`);
-                            console.log(`[Level Up] ${species.name} learned ${moveName}!`);
-                        } else {
-                            // TODO: Move learning UI for replacing moves
-                            const moveName = getMove(move.moveId)?.name || move.moveId;
-                            addLog(`${creature.nickname || species.name} wants to learn ${moveName}, but already knows 4 moves!`);
-                        }
-                    }
-                }
-            } else {
-                console.warn(`[Level Up] No species found for creature ${creature.speciesId}`);
-            }
+            // NOTE: Moves are no longer learned automatically on level up
+            // They are unlocked through the skill tree instead
         }
     }
 

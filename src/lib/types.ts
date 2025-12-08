@@ -36,6 +36,25 @@ export interface TrainerStats {
     speed: number;    // Very low (10-20), but acts first
 }
 
+// ===== Pokemon Skill Tree Node =====
+export type SkillTreeBranch = 'hp' | 'atk' | 'def' | 'spAtk' | 'spDef' | 'speed';
+
+export interface PokemonSkillNode {
+    id: string;
+    type: 'stat' | 'move';
+    branch: SkillTreeBranch;
+    tier: number;                  // 1-15 (distance from center)
+    // Stat node properties
+    stat?: 'hp' | 'atk' | 'def' | 'spAtk' | 'spDef' | 'speed';
+    value?: number;                // +4, +6, +8, +10, +12
+    // Move node properties  
+    moveSlot?: number;             // Index in the species' learnable moves (sorted by level)
+    // Position and connections
+    x: number;
+    y: number;
+    connections: string[];         // IDs of connected nodes
+}
+
 // ===== Trainer (Player Character) =====
 export interface Trainer {
     id: string;
@@ -120,6 +139,11 @@ export interface Creature {
         accuracy: number;
         evasion: number;
     };
+
+    // Skill Tree
+    skillPoints: number;           // Available points to spend
+    unlockedSkillNodes: string[];  // IDs of unlocked nodes
+    learnedMoves: string[];        // All moves learned (from base + tree), can be swapped into active moves
 }
 
 
@@ -132,11 +156,21 @@ export interface CreatureSpecies {
         front: string;
         back: string;
     };
-    learnableMoves: { level: number; moveId: string }[];
+    learnableMoves: {
+        level: number;
+        moveId: string;
+        method?: number;  // 1 = level-up, 2 = TM, etc
+        treeSkill?: boolean;  // Priority flag for skill tree
+        skillTreeSlot?: {  // Admin-assigned slot in skill tree
+            branch: SkillTreeBranch;
+            slotIndex: number;
+        };
+    }[];
     evolutionLevel?: number;
     evolvesTo?: string;
     captureRate: number;       // 0-255, higher = easier
     expYield: number;
+    isStarter?: boolean;  // Flag for starter selection screen
 
     // New fields from Pokedex
     pokedexId: number;

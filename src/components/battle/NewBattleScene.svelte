@@ -3,7 +3,11 @@
     import { trainerStore } from "../../lib/stores/trainerStore";
     import { getMove, MOVES } from "../../lib/data/moves";
     import { getSpecies } from "../../lib/data/creatures";
-    import { getSkill } from "../../lib/data/trainer";
+    import {
+        getSkill,
+        TRAINER_SKILLS,
+        getPassiveStatMultiplier,
+    } from "../../lib/data/trainer";
     import { getItem } from "../../lib/data/items";
     import type { TrainerAction, Creature, Move } from "../../lib/types";
     import { pokedex } from "../../lib/data/pokedex";
@@ -14,9 +18,36 @@
     $: trainer = $trainerStore.trainer;
     $: inventory = $trainerStore.inventory;
 
+    // Get passive stat buffs from trainer skills for display
+    $: passiveBuffs = trainer
+        ? {
+              atk: getPassiveStatMultiplier(trainer, "atk"),
+              def: getPassiveStatMultiplier(trainer, "def"),
+              spAtk: getPassiveStatMultiplier(trainer, "spAtk"),
+              spDef: getPassiveStatMultiplier(trainer, "spDef"),
+              speed: getPassiveStatMultiplier(trainer, "speed"),
+          }
+        : null;
+
+    // Format buff for display (e.g., 1.2 -> "+20%")
+    function formatBuff(multiplier: number): string {
+        if (multiplier <= 1) return "";
+        const percent = Math.round((multiplier - 1) * 100);
+        return `+${percent}%`;
+    }
+
     // Target selection state
     let selectingTarget = false;
     let selectedMove: Move | null = null;
+
+    // Sub-menu state for trainer selection
+    let trainerSubMenu: "main" | "skills" | "bag" | "pokemon" = "main";
+
+    // Get trainer's unlocked active skills (non-passive)
+    $: unlockedActiveSkills =
+        trainer?.unlockedSkills
+            .map((id) => TRAINER_SKILLS[id])
+            .filter((skill) => skill && !skill.passive) || [];
 
     // Current creature for action selection
     $: currentCreature = battle.activeCreatures[battle.selectedCreatureIndex];
@@ -26,6 +57,11 @@
     // Auto-execute when entering resolution phase
     $: if (battle.phase === "resolution" && !battle.animating) {
         executeActions();
+    }
+
+    // Reset trainer sub-menu when entering trainer_select phase
+    $: if (battle.phase === "trainer_select") {
+        trainerSubMenu = "main";
     }
 
     // Mark enemy creatures as seen when battle starts
@@ -346,6 +382,50 @@
                                 {/if}
                                 <span class="level">Lv.{creature.level}</span>
                             </div>
+                            {#if passiveBuffs}
+                                <div class="stat-buffs">
+                                    {#if passiveBuffs.atk > 1}
+                                        <span
+                                            class="buff atk"
+                                            title="Attack {formatBuff(
+                                                passiveBuffs.atk,
+                                            )}">ATK↑</span
+                                        >
+                                    {/if}
+                                    {#if passiveBuffs.def > 1}
+                                        <span
+                                            class="buff def"
+                                            title="Defense {formatBuff(
+                                                passiveBuffs.def,
+                                            )}">DEF↑</span
+                                        >
+                                    {/if}
+                                    {#if passiveBuffs.spAtk > 1}
+                                        <span
+                                            class="buff spatk"
+                                            title="Sp.Atk {formatBuff(
+                                                passiveBuffs.spAtk,
+                                            )}">SpA↑</span
+                                        >
+                                    {/if}
+                                    {#if passiveBuffs.spDef > 1}
+                                        <span
+                                            class="buff spdef"
+                                            title="Sp.Def {formatBuff(
+                                                passiveBuffs.spDef,
+                                            )}">SpD↑</span
+                                        >
+                                    {/if}
+                                    {#if passiveBuffs.speed > 1}
+                                        <span
+                                            class="buff speed"
+                                            title="Speed {formatBuff(
+                                                passiveBuffs.speed,
+                                            )}">SPD↑</span
+                                        >
+                                    {/if}
+                                </div>
+                            {/if}
                             <div class="hp-container">
                                 <div class="hp-bar">
                                     <div
@@ -528,32 +608,138 @@
                 <!-- Action Menu (Bottom Right) -->
                 <div class="action-menu">
                     {#if battle.phase === "trainer_select"}
-                        <div class="menu-stack">
-                            <button
-                                class="menu-btn fight"
-                                on:click={() =>
-                                    newBattleStore.setTrainerAction({
-                                        type: "command",
-                                    })}
-                            >
-                                FIGHT
-                            </button>
-                            <button
-                                class="menu-btn bag"
-                                on:click={() => selectItem("potion")}
-                            >
-                                BAG
-                            </button>
-                            <button
-                                class="menu-btn pokemon"
-                                on:click={() => selectSwitch(0)}
-                            >
-                                POKEMON
-                            </button>
-                            <button class="menu-btn run" on:click={selectFlee}>
-                                RUN
-                            </button>
-                        </div>
+                        {#if trainerSubMenu === "main"}
+                            <div class="menu-stack">
+                                <button
+                                    class="menu-btn skip"
+                                    on:click={() =>
+                                        newBattleStore.setTrainerAction({
+                                            type: "command",
+                                        })}
+                                >
+                                    SKIP
+                                </button>
+                                {#if unlockedActiveSkills.length > 0}
+                                    <button
+                                        class="menu-btn skills"
+                                        on:click={() =>
+                                            (trainerSubMenu = "skills")}
+                                    >
+                                        SKILLS
+                                    </button>
+                                {/if}
+                                <button
+                                    class="menu-btn bag"
+                                    on:click={() => (trainerSubMenu = "bag")}
+                                >
+                                    BAG
+                                </button>
+                                <button
+                                    class="menu-btn pokemon"
+                                    on:click={() =>
+                                        (trainerSubMenu = "pokemon")}
+                                >
+                                    POKEMON
+                                </button>
+                                <button
+                                    class="menu-btn run"
+                                    on:click={selectFlee}
+                                >
+                                    RUN
+                                </button>
+                            </div>
+                        {:else if trainerSubMenu === "skills"}
+                            <div class="menu-stack">
+                                <div class="sub-menu skills-menu">
+                                    <div class="menu-header">
+                                        TRAINER SKILLS
+                                    </div>
+                                    {#each unlockedActiveSkills as skill}
+                                        <button
+                                            class="menu-btn skill"
+                                            on:click={() => {
+                                                selectSkill(skill.id);
+                                                trainerSubMenu = "main";
+                                            }}
+                                            title={skill.description}
+                                        >
+                                            {skill.name}
+                                        </button>
+                                    {/each}
+                                    <button
+                                        class="menu-btn back"
+                                        on:click={() =>
+                                            (trainerSubMenu = "main")}
+                                        >BACK</button
+                                    >
+                                </div>
+                            </div>
+                        {:else if trainerSubMenu === "bag"}
+                            <div class="menu-stack">
+                                <div class="sub-menu bag-menu">
+                                    <div class="menu-header">BAG</div>
+                                    {#each inventory.items as item}
+                                        {@const itemData = getItem(item.itemId)}
+                                        {#if itemData}
+                                            <button
+                                                class="menu-btn item"
+                                                on:click={() => {
+                                                    selectItem(item.itemId);
+                                                    trainerSubMenu = "main";
+                                                }}
+                                            >
+                                                {itemData.name} x{item.quantity}
+                                            </button>
+                                        {/if}
+                                    {/each}
+                                    {#if inventory.items.length === 0}
+                                        <p class="empty-message">No items!</p>
+                                    {/if}
+                                    <button
+                                        class="menu-btn back"
+                                        on:click={() =>
+                                            (trainerSubMenu = "main")}
+                                        >BACK</button
+                                    >
+                                </div>
+                            </div>
+                        {:else if trainerSubMenu === "pokemon"}
+                            <div class="menu-stack">
+                                <div class="sub-menu pokemon-menu">
+                                    <div class="menu-header">
+                                        SWITCH POKEMON
+                                    </div>
+                                    {#each trainer?.party || [] as creature, i}
+                                        {#if !creature.isFainted && !battle.activeCreatures.some((c) => c.id === creature.id)}
+                                            <button
+                                                class="menu-btn pokemon-item"
+                                                on:click={() => {
+                                                    selectSwitch(i);
+                                                    trainerSubMenu = "main";
+                                                }}
+                                            >
+                                                {creature.nickname ||
+                                                    getSpecies(
+                                                        creature.speciesId,
+                                                    )?.name}
+                                                Lv.{creature.level}
+                                            </button>
+                                        {/if}
+                                    {/each}
+                                    {#if !trainer?.party.some((c) => !c.isFainted && !battle.activeCreatures.some((ac) => ac.id === c.id))}
+                                        <p class="empty-message">
+                                            No other Pokémon!
+                                        </p>
+                                    {/if}
+                                    <button
+                                        class="menu-btn back"
+                                        on:click={() =>
+                                            (trainerSubMenu = "main")}
+                                        >BACK</button
+                                    >
+                                </div>
+                            </div>
+                        {/if}
                     {:else if battle.phase === "creature_select" && !selectingTarget}
                         <div class="menu-stack">
                             <div class="sub-menu moves">
@@ -947,6 +1133,43 @@
         font-size: 14px; /* Slightly smaller font */
     }
 
+    .stat-buffs {
+        display: flex;
+        gap: 3px;
+        flex-wrap: wrap;
+        transform: skewX(20deg); /* Counter-skew */
+        margin-bottom: 2px;
+    }
+
+    .buff {
+        font-size: 9px;
+        font-weight: bold;
+        padding: 1px 4px;
+        border-radius: 3px;
+        text-shadow: none;
+    }
+
+    .buff.atk {
+        background: #e74c3c;
+        color: white;
+    }
+    .buff.def {
+        background: #3498db;
+        color: white;
+    }
+    .buff.spatk {
+        background: #9b59b6;
+        color: white;
+    }
+    .buff.spdef {
+        background: #1abc9c;
+        color: white;
+    }
+    .buff.speed {
+        background: #f39c12;
+        color: white;
+    }
+
     .hp-container {
         transform: skewX(20deg); /* Counter-skew bars */
     }
@@ -1102,7 +1325,7 @@
 
     /* Action Menu */
     .action-menu {
-        max-width: 35%;
+        width: 200px;
         max-height: 90%;
         pointer-events: auto;
     }
@@ -1110,33 +1333,35 @@
     .menu-stack {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        align-items: flex-end;
-        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
     }
 
     .menu-btn {
         width: 100%;
-        padding: 8px 24px;
+        min-width: 160px;
+        padding: 10px 20px;
         border: none;
         color: white;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: bold;
         text-transform: uppercase;
         cursor: pointer;
-        transform: skewX(-20deg);
-        transition:
-            transform 0.2s,
-            width 0.2s;
-        text-align: right;
-        box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.2);
+        transform: skewX(-15deg);
+        transition: all 0.2s ease;
+        text-align: center;
+        box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
         position: relative;
         overflow: hidden;
     }
 
     .menu-btn:hover {
-        transform: skewX(-20deg) translateX(-10px);
-        width: 110%;
+        transform: skewX(-15deg) scale(1.05);
+        filter: brightness(1.1);
+    }
+
+    .menu-btn:active {
+        transform: skewX(-15deg) scale(0.98);
     }
 
     .menu-btn.fight {
@@ -1155,12 +1380,42 @@
         background: linear-gradient(90deg, #2980b9, #3498db);
         border-right: 5px solid #2980b9;
     }
+    .menu-btn.skip {
+        background: linear-gradient(90deg, #c0392b, #e74c3c);
+        border-right: 5px solid #c0392b;
+    }
+    .menu-btn.skills {
+        background: linear-gradient(90deg, #8e44ad, #9b59b6);
+        border-right: 5px solid #8e44ad;
+    }
+    .menu-btn.skill {
+        background: linear-gradient(90deg, #9b59b6, #a569c7);
+        border-right: 5px solid #8e44ad;
+    }
+    .menu-btn.item {
+        background: linear-gradient(90deg, #d35400, #e67e22);
+        border-right: 5px solid #d35400;
+    }
+    .menu-btn.pokemon-item {
+        background: linear-gradient(90deg, #27ae60, #2ecc71);
+        border-right: 5px solid #27ae60;
+    }
+    .empty-message {
+        color: rgba(255, 255, 255, 0.6);
+        text-align: center;
+        font-style: italic;
+        padding: 10px;
+        margin: 0;
+    }
 
     .sub-menu {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 8px;
         width: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 8px;
     }
 
     .move-btn {

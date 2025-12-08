@@ -14,31 +14,35 @@
     $: trainer = $trainerStore.trainer as Trainer | null;
     $: skillsByBranch = getSkillsByBranch();
 
+    // Create a reactive key that changes when trainer's skills change
+    $: trainerSkillKey = trainer?.unlockedSkills.join(",") || "";
+    $: trainerPoints = trainer?.skillPoints || 0;
+
+    // Pre-compute skill states reactively based on trainer
+    $: skillStates = Object.fromEntries(
+        Object.keys(TRAINER_SKILLS).map((skillId) => [
+            skillId,
+            {
+                unlocked: trainer?.unlockedSkills.includes(skillId) || false,
+                available: trainer ? canUnlockSkill(trainer, skillId) : false,
+                locked: (() => {
+                    const skill = TRAINER_SKILLS[skillId];
+                    if (!skill || !trainer) return true;
+                    for (const prereq of skill.prerequisites) {
+                        if (!trainer.unlockedSkills.includes(prereq)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })(),
+            },
+        ]),
+    );
+
     function handleUnlock(skillId: string) {
         if (trainer && canUnlockSkill(trainer, skillId)) {
             trainerStore.unlockSkill(skillId);
         }
-    }
-
-    function isUnlocked(skillId: string): boolean {
-        return trainer?.unlockedSkills.includes(skillId) || false;
-    }
-
-    function canUnlock(skillId: string): boolean {
-        return trainer ? canUnlockSkill(trainer, skillId) : false;
-    }
-
-    function isLocked(skillId: string): boolean {
-        const skill = TRAINER_SKILLS[skillId];
-        if (!skill || !trainer) return true;
-
-        // Check if prerequisites are met
-        for (const prereq of skill.prerequisites) {
-            if (!trainer.unlockedSkills.includes(prereq)) {
-                return true;
-            }
-        }
-        return false;
     }
 </script>
 
@@ -48,8 +52,7 @@
             <h2>Trainer Skills</h2>
             <div class="trainer-info">
                 <span class="level">Lv. {trainer?.level || 1}</span>
-                <span class="points">🌟 {trainer?.skillPoints || 0} Points</span
-                >
+                <span class="points">🌟 {trainerPoints} Points</span>
             </div>
             <button class="close-btn" on:click={onClose}>✕</button>
         </div>
@@ -64,10 +67,12 @@
                     </div>
 
                     <div class="skill-list">
-                        {#each skills as skill}
-                            {@const unlocked = isUnlocked(skill.id)}
-                            {@const available = canUnlock(skill.id)}
-                            {@const locked = isLocked(skill.id) && !unlocked}
+                        {#each skills as skill (skill.id + trainerSkillKey)}
+                            {@const state = skillStates[skill.id]}
+                            {@const unlocked = state?.unlocked || false}
+                            {@const available = state?.available || false}
+                            {@const locked =
+                                (state?.locked || false) && !unlocked}
 
                             <button
                                 class="skill-node"

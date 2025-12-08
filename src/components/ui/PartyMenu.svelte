@@ -4,13 +4,15 @@
     import { getSpecies } from "../../lib/data/creatures";
     import { getMove } from "../../lib/data/moves";
     import type { Creature } from "../../lib/types";
+    import PokemonSkillTree from "./PokemonSkillTree.svelte";
 
     export let isOpen = false;
 
     const dispatch = createEventDispatcher();
 
     let selectedIndex = 0;
-    let activeTab: "info" | "stats" | "moves" = "info";
+    let activeTab: "info" | "stats" | "moves" | "skills" = "info";
+    let showSkillTree = false;
 
     $: party = $trainerStore.trainer?.party || [];
     $: selectedCreature = party[selectedIndex] as Creature | undefined;
@@ -88,6 +90,62 @@
         const stats = creature.stats as unknown as Record<string, number>;
         return stats[key] ?? 0;
     }
+
+    // Move swap state
+    let swapMode = false;
+    let swapSourceMove: string | null = null;
+
+    // Start swap mode - select a move to swap in
+    function startSwap(moveId: string) {
+        if (swapSourceMove === moveId) {
+            // Cancel swap
+            swapMode = false;
+            swapSourceMove = null;
+        } else {
+            swapMode = true;
+            swapSourceMove = moveId;
+        }
+    }
+
+    // Confirm swap - replace active move at index with swapSourceMove
+    function confirmSwap(targetIndex: number) {
+        if (!selectedCreature || !swapSourceMove) return;
+
+        // Swap the moves
+        selectedCreature.moves[targetIndex] = swapSourceMove;
+
+        // Reset swap state
+        swapMode = false;
+        swapSourceMove = null;
+
+        // Force UI update
+        selectedIndex = selectedIndex;
+
+        // Persist changes through trainerStore
+        trainerStore.updateCreature(selectedCreature);
+    }
+
+    // Add a move to active moves (if room)
+    function addMove(moveId: string) {
+        if (!selectedCreature || selectedCreature.moves.length >= 4) return;
+
+        if (!selectedCreature.moves.includes(moveId)) {
+            selectedCreature.moves.push(moveId);
+
+            // Force UI update
+            selectedIndex = selectedIndex;
+
+            // Persist changes
+            trainerStore.updateCreature(selectedCreature);
+        }
+    }
+
+    // Computed: available moves (learned but not currently active)
+    $: availableMoves = selectedCreature
+        ? (selectedCreature.learnedMoves || []).filter(
+              (m) => !selectedCreature.moves.includes(m),
+          )
+        : [];
 </script>
 
 {#if isOpen && selectedCreature && species}
@@ -119,6 +177,12 @@
                         class="tab"
                         class:active={activeTab === "moves"}
                         on:click={() => (activeTab = "moves")}>MOVES</button
+                    >
+                    <button
+                        class="tab skills-tab"
+                        class:active={activeTab === "skills"}
+                        on:click={() => (showSkillTree = true)}
+                        >SKILLS ⭐</button
                     >
                 </nav>
                 <div class="nav-buttons">
@@ -268,40 +332,143 @@
                             {/each}
                         </div>
                     {:else if activeTab === "moves"}
-                        <div class="moves-list">
-                            {#each selectedCreature.moves as moveId}
-                                {@const move = getMove(moveId)}
-                                {#if move}
-                                    <div class="move-card">
-                                        <span
-                                            class="move-type-badge"
-                                            style="background: {getTypeColor(
-                                                move.type,
-                                            )}">{move.type.toUpperCase()}</span
-                                        >
-                                        <div class="move-info">
-                                            <span class="move-name"
-                                                >{move.name}</span
-                                            >
-                                            <span class="move-category"
-                                                >{move.category}</span
-                                            >
-                                        </div>
-                                        <div class="move-stats">
-                                            <span class="move-power"
-                                                >power {move.power || "-"}</span
-                                            >
-                                            <span class="move-pp"
-                                                >PP {move.pp}/{move.pp}</span
-                                            >
-                                        </div>
-                                    </div>
-                                {/if}
-                            {/each}
+                        <div class="moves-container">
+                            <!-- Active Moves -->
+                            <div class="moves-section">
+                                <h3 class="moves-section-title">
+                                    Active Moves ({selectedCreature.moves
+                                        .length}/4)
+                                </h3>
+                                <div class="moves-list">
+                                    {#each selectedCreature.moves as moveId, index}
+                                        {@const move = getMove(moveId)}
+                                        {#if move}
+                                            <div class="move-card active-move">
+                                                <span
+                                                    class="move-type-badge"
+                                                    style="background: {getTypeColor(
+                                                        move.type,
+                                                    )}"
+                                                    >{move.type.toUpperCase()}</span
+                                                >
+                                                <div class="move-info">
+                                                    <span class="move-name"
+                                                        >{move.name}</span
+                                                    >
+                                                    <span class="move-category"
+                                                        >{move.category}</span
+                                                    >
+                                                </div>
+                                                <div class="move-stats">
+                                                    <span class="move-power"
+                                                        >power {move.power ||
+                                                            "-"}</span
+                                                    >
+                                                    <span class="move-pp"
+                                                        >PP {move.pp}/{move.pp}</span
+                                                    >
+                                                </div>
+                                                {#if swapMode && swapSourceMove !== null}
+                                                    <button
+                                                        class="swap-target-btn"
+                                                        on:click={() =>
+                                                            confirmSwap(index)}
+                                                        >Replace</button
+                                                    >
+                                                {/if}
+                                            </div>
+                                        {/if}
+                                    {/each}
 
-                            {#if selectedCreature.moves.length === 0}
-                                <p class="no-moves">No moves learned yet.</p>
+                                    {#if selectedCreature.moves.length === 0}
+                                        <p class="no-moves">
+                                            No active moves. Select from
+                                            available moves below!
+                                        </p>
+                                    {/if}
+                                </div>
+                            </div>
+
+                            <!-- Available Moves -->
+                            {#if availableMoves.length > 0}
+                                <div class="moves-section available">
+                                    <h3 class="moves-section-title">
+                                        Available Moves ({availableMoves.length})
+                                    </h3>
+                                    <div class="moves-list available-moves">
+                                        {#each availableMoves as moveId}
+                                            {@const move = getMove(moveId)}
+                                            {#if move}
+                                                <div
+                                                    class="move-card available-move"
+                                                >
+                                                    <span
+                                                        class="move-type-badge"
+                                                        style="background: {getTypeColor(
+                                                            move.type,
+                                                        )}"
+                                                        >{move.type.toUpperCase()}</span
+                                                    >
+                                                    <div class="move-info">
+                                                        <span class="move-name"
+                                                            >{move.name}</span
+                                                        >
+                                                        <span
+                                                            class="move-category"
+                                                            >{move.category}</span
+                                                        >
+                                                    </div>
+                                                    <div class="move-stats">
+                                                        <span class="move-power"
+                                                            >power {move.power ||
+                                                                "-"}</span
+                                                        >
+                                                    </div>
+                                                    {#if selectedCreature.moves.length < 4}
+                                                        <button
+                                                            class="add-move-btn"
+                                                            on:click={() =>
+                                                                addMove(moveId)}
+                                                            >+ Add</button
+                                                        >
+                                                    {:else}
+                                                        <button
+                                                            class="swap-btn"
+                                                            class:active={swapSourceMove ===
+                                                                moveId}
+                                                            on:click={() =>
+                                                                startSwap(
+                                                                    moveId,
+                                                                )}
+                                                            >{swapSourceMove ===
+                                                            moveId
+                                                                ? "Cancel"
+                                                                : "Swap"}</button
+                                                        >
+                                                    {/if}
+                                                </div>
+                                            {/if}
+                                        {/each}
+                                    </div>
+                                </div>
                             {/if}
+                        </div>
+                    {/if}
+
+                    {#if selectedCreature.skillPoints > 0}
+                        <div class="skill-points-reminder">
+                            <span class="sp-icon">⭐</span>
+                            <span
+                                >{selectedCreature.skillPoints} unspent skill point{selectedCreature.skillPoints >
+                                1
+                                    ? "s"
+                                    : ""}!</span
+                            >
+                            <button
+                                class="sp-btn"
+                                on:click={() => (showSkillTree = true)}
+                                >Open Skill Tree</button
+                            >
                         </div>
                     {/if}
                 </div>
@@ -328,6 +495,18 @@
             </div>
         </div>
     </div>
+
+    <!-- Skill Tree Overlay -->
+    {#if showSkillTree && selectedCreature}
+        <PokemonSkillTree
+            creature={selectedCreature}
+            onClose={() => {
+                showSkillTree = false;
+                // Force reactivity update
+                selectedIndex = selectedIndex;
+            }}
+        />
+    {/if}
 {/if}
 
 <style>
@@ -699,6 +878,96 @@
         font-style: italic;
     }
 
+    /* Move Swap UI */
+    .moves-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .moves-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .moves-section.available {
+        margin-top: 10px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .moves-section-title {
+        font-size: 0.85rem;
+        color: #f39c12;
+        margin: 0 0 5px 0;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .available-moves .move-card {
+        background: rgba(0, 100, 0, 0.2);
+        border: 1px dashed rgba(34, 197, 94, 0.4);
+    }
+
+    .active-move {
+        border: 1px solid rgba(52, 152, 219, 0.4);
+    }
+
+    .swap-btn,
+    .add-move-btn,
+    .swap-target-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+
+    .swap-btn {
+        background: #f39c12;
+        color: white;
+    }
+
+    .swap-btn:hover {
+        background: #e67e22;
+    }
+
+    .swap-btn.active {
+        background: #e74c3c;
+    }
+
+    .add-move-btn {
+        background: #27ae60;
+        color: white;
+    }
+
+    .add-move-btn:hover {
+        background: #219a52;
+    }
+
+    .swap-target-btn {
+        background: #e74c3c;
+        color: white;
+        animation: pulse 1s infinite;
+    }
+
+    .swap-target-btn:hover {
+        background: #c0392b;
+    }
+
+    @keyframes pulse {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+
     /* Party Indicator */
     .party-indicator {
         display: flex;
@@ -980,5 +1249,51 @@
             width: 38px;
             height: 38px;
         }
+    }
+
+    /* Skills Tab Styles */
+    .skills-tab {
+        background: linear-gradient(135deg, #a855f7, #7c3aed) !important;
+        color: white !important;
+    }
+
+    .skill-points-reminder {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+        padding: 12px 16px;
+        background: linear-gradient(
+            135deg,
+            rgba(251, 191, 36, 0.2),
+            rgba(245, 158, 11, 0.2)
+        );
+        border: 1px solid rgba(251, 191, 36, 0.5);
+        border-radius: 8px;
+        color: #fbbf24;
+        font-weight: bold;
+    }
+
+    .sp-icon {
+        font-size: 1.5rem;
+    }
+
+    .sp-btn {
+        margin-left: auto;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s;
+    }
+
+    .sp-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
     }
 </style>
