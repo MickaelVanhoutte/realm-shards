@@ -19,7 +19,92 @@ export type ElementType =
     | 'ghost'
     | 'dragon'
     | 'dark'
-    | 'steel';
+    | 'steel'
+    | 'fairy';
+
+// ===== Pokedex JSON Data Structures =====
+// These match the structure of pokedex.json for type safety
+
+export interface MoveEffectJSON {
+    move_effect_id: number;
+    local_language_id: number;
+    short_effect: string;
+    effect: string;
+}
+
+export interface MoveJSON {
+    id: number;
+    name: string;
+    type: string;
+    category: 'physical' | 'special' | 'no-damage' | 'status';
+    power: number | '';
+    accuracy: number | '';
+    pp: number;
+    priority: number;
+    target: string;
+    effect?: MoveEffectJSON;
+    effectChance?: number;
+    description: string;
+    level: number;
+    method: number;  // 1 = level-up, 2 = TM, etc.
+    // Admin panel additions
+    treeSkill?: boolean;
+    skillTreeSlot?: {
+        branch: SkillTreeBranch;
+        slotIndex: number;
+    };
+}
+
+export interface PokedexStatsJSON {
+    hp: number;
+    attack: number;
+    defense: number;
+    specialAttack: number;
+    specialDefense: number;
+    speed: number;
+    total: number;
+}
+
+export interface PokedexEvolutionJSON {
+    id: number;
+    level?: number;
+    method: string;
+    item?: string;
+}
+
+export interface PokedexSpritesJSON {
+    male?: {
+        front?: { frame1?: string; shiny1?: string };
+        back?: { frame1?: string; shiny1?: string };
+    };
+    female?: {
+        front?: { frame1?: string; shiny1?: string };
+        back?: { frame1?: string; shiny1?: string };
+    };
+}
+
+export interface PokedexEntryJSON {
+    id: number;
+    regionalId: number;
+    region: string;
+    name: string;
+    types: string[];
+    abilities: string[];
+    baseXp: number;
+    moves: MoveJSON[];
+    stats: PokedexStatsJSON;
+    height: number;
+    weight: number;
+    description: string;
+    isLegendary: number;
+    captureRate: number;
+    growthRateId: number;
+    percentageMale: number;
+    evolution: PokedexEvolutionJSON[];
+    sprites: PokedexSpritesJSON;
+    // Admin panel additions
+    starter?: boolean;
+}
 
 // ===== Base Stats =====
 export interface CreatureStats {
@@ -36,7 +121,7 @@ export interface TrainerStats {
     speed: number;    // Very low (10-20), but acts first
 }
 
-// ===== Pokemon Skill Tree Node =====
+// ===== Pokemon Skill Tree Branch (defined early for use in JSON types) =====
 export type SkillTreeBranch = 'hp' | 'atk' | 'def' | 'spAtk' | 'spDef' | 'speed';
 
 export interface PokemonSkillNode {

@@ -1,36 +1,9 @@
 import pokedexData from '../../assets/data/pokedex.json';
 import abilitiesData from '../../assets/data/abilities.json';
 import xpChartData from '../../assets/data/xp-chart.json';
+import type { PokedexEntryJSON } from '../types';
 
-// Interfaces matching the JSON structure
-export interface PokedexEntryJSON {
-    id: number;
-    regionalId: number;
-    region: string;
-    name: string;
-    types: string[];
-    abilities: string[];
-    baseXp: number;
-    stats: {
-        hp: number;
-        attack: number;
-        defense: number;
-        specialAttack: number;
-        specialDefense: number;
-        speed: number;
-        total: number;
-    };
-    height: number;
-    weight: number;
-    description: string;
-    isLegendary: number; // 0 or 1 in JSON
-    captureRate: number;
-    growthRateId: number;
-    percentageMale: number | null;
-    evolution: any[]; // Complex structure, leaving as any for now
-    moves: any[]; // Complex structure
-}
-
+// Local interfaces for abilities and XP (not in central types)
 export interface AbilityJSON {
     id: number;
     names: string;
@@ -42,6 +15,9 @@ export interface ExperienceDataJSON {
     level: number;
     experience: number;
 }
+
+// Re-export for convenience
+export type { PokedexEntryJSON };
 
 // Helper class to access data
 export class Pokedex {

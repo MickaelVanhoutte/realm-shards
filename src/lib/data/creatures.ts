@@ -1,4 +1,4 @@
-import type { Creature, CreatureSpecies, ElementType, SkillTreeBranch } from '../types';
+import type { Creature, CreatureSpecies, ElementType, SkillTreeBranch, PokedexEntryJSON, MoveJSON } from '../types';
 import { pokedex } from './pokedex';
 import { MOVES } from './moves';
 import {
@@ -7,9 +7,10 @@ import {
     getNode,
     getAdjacentNodes
 } from './pokemonSkillTree';
+import { getMoveForSlot } from './pokemonSkillUtils';
 
 // Helper to convert Pokedex entry to CreatureSpecies
-function convertToSpecies(pokedexEntry: any): CreatureSpecies {
+function convertToSpecies(pokedexEntry: PokedexEntryJSON): CreatureSpecies {
     // Map types to ElementType
     const types = pokedexEntry.types.map((t: string) => t.toLowerCase() as ElementType);
 
@@ -25,14 +26,14 @@ function convertToSpecies(pokedexEntry: any): CreatureSpecies {
 
     // Map ALL moves (not just level-up) and preserve skillTreeSlot for tree assignments
     const learnableMoves = pokedexEntry.moves
-        .map((m: any) => ({
+        .map((m: MoveJSON) => ({
             level: m.level,
             method: m.method,
             moveId: m.name.toLowerCase().replace(/[-\s]+/g, '_'),
             treeSkill: m.treeSkill,
             skillTreeSlot: m.skillTreeSlot  // Preserve admin-assigned slot
         }))
-        .filter((m: any) => MOVES[m.moveId]); // Only include implemented moves
+        .filter((m) => MOVES[m.moveId]); // Only include implemented moves
 
     return {
         id: pokedexEntry.name.toLowerCase(),
@@ -70,14 +71,6 @@ export const getSpecies = (id: string): CreatureSpecies | undefined => {
     return CREATURE_SPECIES[id.toLowerCase()];
 };
 
-// Helper to get move for a skill tree slot
-function getMoveForSlotInternal(species: CreatureSpecies, branch: SkillTreeBranch, slotIndex: number): { moveId: string; level: number } | null {
-    const sortedMoves = [...species.learnableMoves].sort((a, b) => a.level - b.level);
-    const branchOrder: SkillTreeBranch[] = ['atk', 'spAtk', 'def', 'spDef', 'hp', 'speed'];
-    const branchIndex = branchOrder.indexOf(branch);
-    const branchMoves = sortedMoves.filter((_, i) => i % 6 === branchIndex);
-    return slotIndex < branchMoves.length ? branchMoves[slotIndex] : null;
-}
 
 let creatureIdCounter = 0;
 
@@ -176,7 +169,7 @@ function allocateRandomNodes(creature: Creature, species: CreatureSpecies, point
         }
 
         if (node && node.type === 'move' && node.moveSlot !== undefined) {
-            const moveData = getMoveForSlotInternal(species, node.branch, node.moveSlot);
+            const moveData = getMoveForSlot(species.id, node.branch, node.moveSlot);
             if (moveData && !creature.moves.includes(moveData.moveId) && creature.moves.length < 4) {
                 creature.moves.push(moveData.moveId);
             }

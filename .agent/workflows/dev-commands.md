@@ -21,20 +21,18 @@ Opens at: http://localhost:5173/realm-shards/
 npm run build
 ```
 
-Output in `dist/` directory.
+## Linting & Formatting
 
-## Key URLs
+```bash
+# Install dev dependencies first
+npm install -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-svelte svelte-eslint-parser prettier prettier-plugin-svelte
 
-| URL | Description |
-|-----|-------------|
-| `/realm-shards/` | Main game |
-| `/realm-shards/admin` | Admin panel |
+# Run type check
+npm run check
 
-## Testing Locally
-
-1. Start dev server
-2. Open browser to localhost:5173/realm-shards/
-3. For admin: navigate to /realm-shards/admin
+# Format code (after installing prettier)
+npx prettier --write src/
+```
 
 ## After Pokedex Changes
 
