@@ -9,7 +9,7 @@ description: Common development commands
 ## Start Dev Server
 
 ```bash
-cd /Users/20017225/PERSO/realm-shards
+cd /Users/mvanhoutte/IdeaProjects/realm-shards
 npm run dev
 ```
 
@@ -21,16 +21,35 @@ Opens at: http://localhost:5173/realm-shards/
 npm run build
 ```
 
+## Testing
+
+**Run tests before committing any changes to game logic!**
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests in watch mode during development
+npm run test:watch
+
+# Run with coverage report
+npm run test:coverage
+```
+
+Tests are located in `src/lib/data/__tests__/` and cover:
+- Type effectiveness (`moves.test.ts`)
+- Status effects and stat modifiers (`effects.test.ts`)
+- Trainer skills and exp (`trainer.test.ts`)
+- Skill tree logic (`pokemonSkillUtils.test.ts`)
+- Creature data structures (`creatures.test.ts`)
+
 ## Linting & Formatting
 
 ```bash
-# Install dev dependencies first
-npm install -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-svelte svelte-eslint-parser prettier prettier-plugin-svelte
-
 # Run type check
 npm run check
 
-# Format code (after installing prettier)
+# Format code
 npx prettier --write src/
 ```
 
