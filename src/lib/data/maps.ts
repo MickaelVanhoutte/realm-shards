@@ -11,7 +11,9 @@ export const TILE_TYPES: Record<TileType, TileInfo> = {
 };
 
 // Simple starter map (15x10 tiles)
+// Simple starter map (15x10 tiles)
 export const STARTER_MAP: MapData = {
+    id: 'starter-town',
     name: 'Starter Meadow',
     width: 15,
     height: 10,
@@ -37,6 +39,61 @@ export const STARTER_MAP: MapData = {
         'tree', 'ground', 'ground', 'ground', 'ground', 'path', 'path', 'path', 'path', 'path', 'ground', 'ground', 'ground', 'ground', 'tree',
         // Row 9
         'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree', 'tree'
+    ],
+    // Legacy support: empty collision array (relies on tile types)
+    collisions: [],
+    npcs: [],
+    items: [],
+    warps: [],
+    encounterZones: []
+};
+
+export const FIRST_BEACH_MAP: MapData = {
+    id: 'first-beach',
+    name: 'First Beach',
+    width: 150,
+    height: 150,
+    playerStart: { x: 50, y: 50 }, // Moved to a better starting position
+
+    // Using assets provided by user
+    background: 'sprites/maps/First-beach.png',
+    foreground: 'sprites/maps/First-beach-foreground.png',
+
+    tiles: [], // No tile data needed for image-based map
+    collisions: [], // TODO: Import from Tiled JSON
+    npcs: [
+        {
+            id: 'npc_guide',
+            name: 'Beach Guide',
+            sprite: 'sprites/trainers/walking/ethan.png', // Placeholder
+            x: 22,
+            y: 15,
+            direction: 'left',
+            isMobile: false,
+            dialogue: ["Welcome to First Beach!", "Watch out for wild Pokemon in the water."]
+        }
+    ],
+    items: [
+        {
+            id: 'item_potion_1',
+            itemId: 'potion',
+            x: 25,
+            y: 15,
+            visible: true,
+            collected: false
+        }
+    ],
+    warps: [], // Add a warp if we have a second map to go to
+    encounterZones: [
+        {
+            id: 'beach_grass',
+            name: 'Beach Grass',
+            type: 'grass',
+            rect: { x: 10, y: 10, w: 10, h: 10 },
+            encounters: [
+                { speciesId: 'pidgey', minLevel: 2, maxLevel: 5, chance: 100 }
+            ]
+        }
     ]
 };
 

@@ -422,16 +422,81 @@ export interface TileInfo {
 }
 
 export interface MapData {
+    id: string;
     name: string;
     width: number;
     height: number;
-    playerStart: { x: number; y: number };
-    tiles: TileType[];
-    encounters?: {
+
+    // Visuals
+    background?: string; // Path to background image (e.g., 'maps/beach-bg.png')
+    foreground?: string; // Path to foreground image (e.g., 'maps/beach-fg.png')
+
+    // Logic
+    tiles: TileType[]; // Legacy or simple tile data
+    collisions: number[]; // 1D array of collision flags
+
+    // Entities
+    npcs: NPC[];
+    items: OverworldItem[];
+    warps: Warp[];
+
+    // Encounters
+    encounters?: { // Legacy single-zone support
         species: string[];
         minLevel: number;
         maxLevel: number;
     };
+    encounterZones: EncounterZone[];
+
+    playerStart: { x: number; y: number };
+}
+
+export interface NPC {
+    id: string;
+    name: string;
+    sprite: string; // e.g., 'sprites/npc/lass.png'
+    x: number;
+    y: number;
+    direction: Direction;
+    isMobile: boolean; // Does it wander?
+    behavior?: 'idle' | 'wander' | 'look_around';
+
+    // Interaction
+    dialogue?: string[];
+    trainerId?: string; // If this NPC initiates a battle
+    givesItem?: string; // Item ID
+    healer?: boolean;
+}
+
+export interface OverworldItem {
+    id: string;
+    itemId: string;
+    x: number;
+    y: number;
+    visible: boolean; // strict true = pokeball on ground, false = hidden item
+    collected: boolean; // Runtime flag
+}
+
+export interface Warp {
+    x: number;
+    y: number;
+    toMapId: string;
+    toX: number;
+    toY: number;
+    trigger: 'step' | 'interact';
+}
+
+export interface EncounterZone {
+    id: string;
+    name: string;
+    type: 'grass' | 'water' | 'cave';
+    rect: { x: number; y: number; w: number; h: number }; // Area
+    encounters: {
+        speciesId: string;
+        minLevel: number;
+        maxLevel: number;
+        chance: number; // 0-100 relative weight
+    }[];
 }
 
 export type Direction = 'up' | 'down' | 'left' | 'right';

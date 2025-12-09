@@ -1,18 +1,21 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { playerStore } from "../../lib/stores/playerStore";
-    import { trainerStore } from "../../lib/stores/trainerStore";
-    import { gameState } from "../../lib/stores/gameState";
-    import { STARTER_MAP, getTileInfo } from "../../lib/data/maps";
-    import VirtualJoystick from "../ui/VirtualJoystick.svelte";
-    import SaveLoadMenu from "../ui/SaveLoadMenu.svelte";
-    import type { MapData, Direction } from "../../lib/types";
-    import Pokedex from "../ui/Pokedex.svelte";
-    import PartyMenu from "../ui/PartyMenu.svelte";
-    import TrainerSkillTree from "../ui/TrainerSkillTree.svelte";
-    import { pokedex } from "../../lib/data/pokedex";
+    import { onMount } from 'svelte';
+    import { playerStore } from '../../lib/stores/playerStore';
+    import { trainerStore } from '../../lib/stores/trainerStore';
+    import { gameState } from '../../lib/stores/gameState';
+    import { STARTER_MAP, FIRST_BEACH_MAP, getTileInfo } from '../../lib/data/maps';
+    import VirtualJoystick from '../ui/VirtualJoystick.svelte';
+    import SaveLoadMenu from '../ui/SaveLoadMenu.svelte';
+    import type { MapData, Direction } from '../../lib/types';
+    import Pokedex from '../ui/Pokedex.svelte';
+    import PartyMenu from '../ui/PartyMenu.svelte';
+    import TrainerSkillTree from '../ui/TrainerSkillTree.svelte';
+    import { pokedex } from '../../lib/data/pokedex';
 
-    const playerSpritePath = `${import.meta.env.BASE_URL}sprites/trainers/walking/ethan.png`;
+    // Helper function to resolve asset paths correctly
+    const assetPath = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+
+    const playerSpritePath = assetPath('sprites/trainers/walking/ethan.png');
 
     // Menu state
     let showPauseMenu = false;
@@ -22,7 +25,9 @@
     let showPartyMenu = false;
     let showSkillTree = false;
 
-    let currentMap: MapData = STARTER_MAP;
+    // Resolve map from ID
+    $: currentMap = $gameState.currentMap === 'first-beach' ? FIRST_BEACH_MAP : STARTER_MAP;
+
     let isMobile = false;
 
     // Floating joystick state
@@ -79,10 +84,12 @@
         // ... existing onMount code ...
         // Only reset position for new games, not loaded saves
         if (!$gameState.isLoadedGame) {
-            playerStore.setPosition(
-                currentMap.playerStart.x,
-                currentMap.playerStart.y,
-            );
+            // Set initial map if not set
+            if (!$gameState.currentMap) {
+                gameState.setMap('first-beach'); // Default
+            }
+
+            playerStore.setPosition(currentMap.playerStart.x, currentMap.playerStart.y);
             // Trainer is already initialized in TitleScreen with starter
         } else {
             // Clear the loaded game flag after position is preserved
@@ -90,27 +97,21 @@
         }
 
         // Check if mobile
-        isMobile = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
         // Keyboard controls
-        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
-            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener('keydown', handleKeyDown);
             if (walkInterval) clearInterval(walkInterval);
         };
     });
 
     function handleKeyDown(e: KeyboardEvent): void {
         // Skip movement if menu is open
-        if (
-            showPauseMenu ||
-            showPartyMenu ||
-            showPokedex ||
-            showSaveMenu ||
-            showLoadMenu
-        ) {
-            if (e.key === "Escape") {
+        if (showPauseMenu || showPartyMenu || showPokedex || showSaveMenu || showLoadMenu) {
+            if (e.key === 'Escape') {
                 showPauseMenu = false;
                 showPartyMenu = false;
                 showPokedex = false;
@@ -122,7 +123,7 @@
         }
 
         // Party menu shortcut
-        if (e.key === "p" || e.key === "P") {
+        if (e.key === 'p' || e.key === 'P') {
             showPartyMenu = true;
             return;
         }
@@ -130,26 +131,32 @@
         let direction: Direction | null = null;
 
         switch (e.key) {
-            case "ArrowUp":
-            case "w":
-            case "W":
-                direction = "up";
+            case 'ArrowUp':
+            case 'w':
+            case 'W':
+                direction = 'up';
                 break;
-            case "ArrowDown":
-            case "s":
-            case "S":
-                direction = "down";
+            case 'ArrowDown':
+            case 's':
+            case 'S':
+                direction = 'down';
                 break;
-            case "ArrowLeft":
-            case "a":
-            case "A":
-                direction = "left";
+            case 'ArrowLeft':
+            case 'a':
+            case 'A':
+                direction = 'left';
                 break;
-            case "ArrowRight":
-            case "d":
-            case "D":
-                direction = "right";
+            case 'ArrowRight':
+            case 'd':
+            case 'D':
+                direction = 'right';
                 break;
+            case 'Enter':
+            case ' ':
+            case 'z':
+            case 'Z':
+                playerStore.interact(currentMap);
+                return; // Prevent movement logic
         }
 
         if (direction) {
@@ -158,9 +165,7 @@
         }
     }
 
-    function handleJoystickMove(
-        event: CustomEvent<{ direction: Direction }>,
-    ): void {
+    function handleJoystickMove(event: CustomEvent<{ direction: Direction }>): void {
         const { direction } = event.detail;
         playerStore.move(direction, currentMap);
     }
@@ -227,64 +232,88 @@
                 --map-height: {currentMap.height};
             "
         >
-            <!-- Tile grid -->
-            <div class="tile-grid">
-                {#each currentMap.tiles as tileType, index}
-                    {@const x = index % currentMap.width}
-                    {@const y = Math.floor(index / currentMap.width)}
-                    {@const tileInfo = getTileInfo(tileType)}
-                    <div
-                        class="tile"
-                        class:grass={tileType === "grass"}
-                        style="
+            <!-- 1. Background Image -->
+            {#if currentMap.background}
+                <img src={assetPath(currentMap.background)} alt="Map Background" class="map-background" />
+            {/if}
+
+            <!-- 2. Legacy Tile grid (if tiles exist) -->
+            {#if currentMap.tiles && currentMap.tiles.length > 0}
+                <div class="tile-grid">
+                    {#each currentMap.tiles as tileType, index}
+                        {@const x = index % currentMap.width}
+                        {@const y = Math.floor(index / currentMap.width)}
+                        {@const tileInfo = getTileInfo(tileType)}
+                        <div
+                            class="tile"
+                            class:grass={tileType === 'grass'}
+                            style="
                             --tile-x: {x};
                             --tile-y: {y};
                             background-color: {tileInfo.color};
                         "
-                    >
-                        {#if tileType === "tree"}
-                            <span class="tile-sprite tree">🌲</span>
-                        {:else if tileType === "water"}
-                            <span class="tile-sprite water">💧</span>
-                        {:else if tileType === "grass"}
-                            <span class="tile-sprite grass">🌿</span>
-                        {/if}
+                        >
+                            {#if tileType === 'tree'}
+                                <span class="tile-sprite tree">🌲</span>
+                            {:else if tileType === 'water'}
+                                <span class="tile-sprite water">💧</span>
+                            {:else if tileType === 'grass'}
+                                <span class="tile-sprite grass">🌿</span>
+                            {/if}
+                        </div>
+                    {/each}
+                </div>
+            {/if}
+
+            <!-- 3. Items (Hidden for now - needs proper sprite implementation) -->
+            <!-- TODO: Implement item sprites -->
+
+            <!-- 4. NPCs -->
+            {#if currentMap.npcs}
+                {#each currentMap.npcs as npc (npc.id)}
+                    {@const npcSpriteUrl = npc.sprite ? assetPath(npc.sprite) : playerSpritePath}
+                    {@const dirRow = { down: 0, left: 1, right: 2, up: 3 }[npc.direction] || 0}
+                    <div class="map-entity npc" style="--x: {npc.x}; --y: {npc.y}; z-index: {npc.y};">
+                        <div
+                            class="npc-sprite-sheet"
+                            style="
+                                background-image: url({npcSpriteUrl});
+                                background-position: 0% {dirRow * 33.333}%;
+                            "
+                        ></div>
                     </div>
                 {/each}
-            </div>
+            {/if}
 
-            <!-- Player -->
+            <!-- 5. Player -->
             <div
                 class="player"
                 class:moving={$playerStore.isMoving}
                 style="
                     --player-x: {$playerStore.x};
                     --player-y: {$playerStore.y};
+                    z-index: {$playerStore.y};
                 "
             >
                 <div
                     class="player-sprite-sheet"
                     style="
                         background-image: url({playerSpritePath});
-                        background-position: {getBackgroundPosition(
-                        $playerStore.direction,
-                        walkingFrame,
-                    )};
+                        background-position: {getBackgroundPosition($playerStore.direction, walkingFrame)};
                     "
                 ></div>
                 <div class="player-shadow"></div>
             </div>
+
+            <!-- 6. Foreground Image -->
+            {#if currentMap.foreground}
+                <img src={assetPath(currentMap.foreground)} alt="Map Foreground" class="map-foreground" />
+            {/if}
         </div>
     </div>
 
     <!-- Menu Button (separate for proper click handling) -->
-    <button
-        class="menu-btn"
-        on:click={() => (showPauseMenu = true)}
-        type="button"
-    >
-        ☰
-    </button>
+    <button class="menu-btn" on:click={() => (showPauseMenu = true)} type="button"> ☰ </button>
 
     <!-- UI Overlay -->
     <div class="ui-overlay">
@@ -303,18 +332,9 @@
                         class:low-hp={creature.currentHp / creature.maxHp < 0.3}
                         class:fainted={creature.isFainted}
                     >
-                        <img
-                            src={creature.sprite.front}
-                            alt="sprite"
-                            class="member-sprite"
-                        />
+                        <img src={creature.sprite.front} alt="sprite" class="member-sprite" />
                         <div class="hp-mini">
-                            <div
-                                class="hp-fill"
-                                style="width: {(creature.currentHp /
-                                    creature.maxHp) *
-                                    100}%"
-                            ></div>
+                            <div class="hp-fill" style="width: {(creature.currentHp / creature.maxHp) * 100}%"></div>
                         </div>
                     </div>
                 {/each}
@@ -324,10 +344,7 @@
 
     <!-- Pause Menu -->
     {#if showPauseMenu}
-        <div
-            class="pause-overlay"
-            on:click|self={() => (showPauseMenu = false)}
-        >
+        <div class="pause-overlay" on:click|self={() => (showPauseMenu = false)}>
             <div class="pause-menu">
                 <h2>⏸️ Paused</h2>
                 <button
@@ -376,16 +393,8 @@
                 >
                     📂 Load Game
                 </button>
-                <button
-                    class="pause-btn"
-                    on:click={() => (showPauseMenu = false)}
-                >
-                    ▶️ Resume
-                </button>
-                <button
-                    class="pause-btn danger"
-                    on:click={() => gameState.setScreen("title")}
-                >
+                <button class="pause-btn" on:click={() => (showPauseMenu = false)}> ▶️ Resume </button>
+                <button class="pause-btn danger" on:click={() => gameState.setScreen('title')}>
                     🏠 Title Screen
                 </button>
             </div>
@@ -403,10 +412,7 @@
         <Pokedex on:close={() => (showPokedex = false)} />
     {/if}
     {#if showPartyMenu}
-        <PartyMenu
-            isOpen={showPartyMenu}
-            on:close={() => (showPartyMenu = false)}
-        />
+        <PartyMenu isOpen={showPartyMenu} on:close={() => (showPartyMenu = false)} />
     {/if}
     {#if showSkillTree}
         <TrainerSkillTree onClose={() => (showSkillTree = false)} />
@@ -436,8 +442,7 @@
     <!-- Grass encounter hint -->
     {#if getTileInfo(currentMap.tiles[$playerStore.y * currentMap.width + $playerStore.x])?.encounter}
         <div class="encounter-warning">
-            <span class="warning-pulse">⚠️ Wild area - Enemies may appear!</span
-            >
+            <span class="warning-pulse">⚠️ Wild area - Enemies may appear!</span>
         </div>
     {/if}
 </div>
@@ -461,14 +466,18 @@
     }
 
     .map-container {
-        --tile-size: clamp(32px, 8vw, 48px);
+        /* 16px matches the original Tiled export. Scale up with transform for visibility */
+        --tile-size: 16px;
         position: relative;
         width: calc(var(--tile-size) * var(--map-width));
         height: calc(var(--tile-size) * var(--map-height));
-        transform: translate(
-            calc(50% - (var(--player-x) + 0.5) * var(--tile-size)),
-            calc(50% - (var(--player-y) + 0.5) * var(--tile-size))
-        );
+        /* Scale up for visibility while maintaining proportions */
+        transform-origin: center center;
+        transform: scale(2)
+            translate(
+                calc(50% - (var(--player-x) + 0.5) * var(--tile-size)),
+                calc(50% - (var(--player-y) + 0.5) * var(--tile-size))
+            );
         transition: transform 0.15s ease-out;
     }
 
@@ -506,21 +515,6 @@
 
     .tile-sprite.water {
         animation: waterRipple 2s ease-in-out infinite;
-    }
-
-    .player {
-        position: absolute;
-        width: var(--tile-size);
-        height: var(--tile-size);
-        left: calc(var(--player-x) * var(--tile-size));
-        top: calc(var(--player-y) * var(--tile-size));
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10;
-        transition:
-            left 0.15s ease-out,
-            top 0.15s ease-out;
     }
 
     .player-sprite-sheet {
@@ -762,5 +756,74 @@
     .pause-btn.danger:hover {
         background: var(--danger);
         border-color: var(--danger);
+    }
+
+    .map-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        /* Natural size - matches tile grid exactly */
+        width: auto;
+        height: auto;
+        image-rendering: pixelated;
+        z-index: 0;
+    }
+
+    .map-foreground {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: auto;
+        height: auto;
+        image-rendering: pixelated;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    .player {
+        position: absolute;
+        width: var(--tile-size);
+        /* Allow player to be taller */
+        height: calc(var(--tile-size) * 1.5);
+        left: calc(var(--player-x) * var(--tile-size));
+        /* Anchor at bottom of the tile */
+        top: calc(var(--player-y) * var(--tile-size) - (var(--tile-size) * 0.5));
+        display: flex;
+        justify-content: center;
+        align-items: flex-end; /* Align sprite to bottom */
+        z-index: 10;
+        transition:
+            left 0.15s ease-out,
+            top 0.15s ease-out;
+    }
+
+    .map-entity {
+        position: absolute;
+        width: var(--tile-size);
+        height: var(--tile-size);
+        left: calc(var(--x) * var(--tile-size));
+        top: calc(var(--y) * var(--tile-size));
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* z-index is set inline */
+    }
+
+    .npc-sprite-sheet {
+        width: 100%;
+        height: 100%;
+        background-size: 400% 400%;
+        image-rendering: pixelated;
+    }
+
+    .npc-sprite {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+
+    .item-sprite {
+        font-size: var(--font-size-lg);
     }
 </style>

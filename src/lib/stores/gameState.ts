@@ -12,7 +12,7 @@ interface GameStateData {
 function createGameState() {
     const initialState: GameStateData = {
         screen: 'title',
-        currentMap: 'starter_meadow',
+        currentMap: 'first-beach',
         flags: {},
         isLoadedGame: false
     };
