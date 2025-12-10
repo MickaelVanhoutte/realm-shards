@@ -16,6 +16,7 @@
     const assetPath = (path: string) => `${import.meta.env.BASE_URL}${path}`;
 
     const playerSpritePath = assetPath('sprites/trainers/walking/ethan.png');
+    const playerRunningSpritePath = assetPath('sprites/trainers/running/ethan.png');
 
     // Menu state
     let showPauseMenu = false;
@@ -29,6 +30,7 @@
     $: currentMap = $gameState.currentMap === 'first-beach' ? FIRST_BEACH_MAP : STARTER_MAP;
 
     let isMobile = false;
+    let isRunning = false;
 
     // Floating joystick state
     let joystickVisible = false;
@@ -47,9 +49,12 @@
             stopTimeout = null;
         }
         if (!walkInterval) {
-            walkInterval = setInterval(() => {
-                walkingFrame = (walkingFrame + 1) % 4;
-            }, 150);
+            walkInterval = setInterval(
+                () => {
+                    walkingFrame = (walkingFrame + 1) % 4;
+                },
+                isRunning ? 100 : 150
+            ); // Faster animation when running
         }
     } else {
         if (walkInterval && !stopTimeout) {
@@ -101,9 +106,11 @@
 
         // Keyboard controls
         window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
             if (walkInterval) clearInterval(walkInterval);
         };
     });
@@ -161,7 +168,14 @@
 
         if (direction) {
             e.preventDefault();
-            playerStore.move(direction, currentMap);
+            isRunning = e.shiftKey;
+            playerStore.move(direction, currentMap, isRunning);
+        }
+    }
+
+    function handleKeyUp(e: KeyboardEvent): void {
+        if (e.key === 'Shift') {
+            isRunning = false;
         }
     }
 
@@ -298,7 +312,7 @@
                 <div
                     class="player-sprite-sheet"
                     style="
-                        background-image: url({playerSpritePath});
+                        background-image: url({isRunning ? playerRunningSpritePath : playerSpritePath});
                         background-position: {getBackgroundPosition($playerStore.direction, walkingFrame)};
                     "
                 ></div>

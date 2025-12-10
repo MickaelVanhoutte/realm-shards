@@ -84,8 +84,11 @@ function createPlayerStore() {
     return {
         subscribe,
 
-        move: (direction: Direction, mapData: MapData): boolean => {
+        move: (direction: Direction, mapData: MapData, isRunning: boolean = false): boolean => {
             if (!canMove) return false;
+
+            // Determine cooldown based on running state
+            const currentCooldown = isRunning ? 100 : MOVE_COOLDOWN;
 
             const state = get({ subscribe });
             let newX = state.x;
@@ -219,12 +222,12 @@ function createPlayerStore() {
             // Reset movement state after animation
             setTimeout(() => {
                 update(s => ({ ...s, isMoving: false }));
-            }, MOVE_COOLDOWN - 50);
+            }, currentCooldown - 50);
 
             // Reset cooldown
             setTimeout(() => {
                 canMove = true;
-            }, MOVE_COOLDOWN);
+            }, currentCooldown);
 
             return true;
         },
