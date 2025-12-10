@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { authStore } from "../../lib/stores/authStore";
-    import {
-        adminDataStore,
-        type MoveEdit,
-    } from "../../lib/stores/adminDataStore";
-    import { pokedex } from "../../lib/data/pokedex";
-    import { getMove } from "../../lib/data/moves";
+    import { onMount } from 'svelte';
+    import { authStore } from '../../lib/stores/authStore';
+    import { adminDataStore, type MoveEdit } from '../../lib/stores/adminDataStore';
+    import { pokedex } from '../../lib/data/pokedex';
+    import { getMove } from '../../lib/data/moves';
+
+    // Props
+    export let embedded = false; // When true, skip auth UI and header (used by AdminShell)
 
     // State
-    let searchQuery = "";
+    let searchQuery = '';
     let selectedPokemonId: number | null = null;
-    let editTab: "stats" | "types" | "moves" = "stats";
+    let editTab: 'stats' | 'types' | 'moves' = 'stats';
     let googleButtonRef: HTMLDivElement;
     let refreshKey = 0; // Used to force reactivity
 
@@ -19,57 +19,56 @@
     $: allPokemon = pokedex.getAllPokemon();
     $: filteredPokemon = searchQuery
         ? allPokemon.filter(
-              (p) =>
-                  p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  p.id.toString().includes(searchQuery),
+              p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toString().includes(searchQuery)
           )
         : allPokemon;
 
     // Get selected Pokemon data (with edits applied) - refreshKey forces re-evaluation
-    $: selectedPokemon = (refreshKey, selectedPokemonId)
-        ? adminDataStore.getEditedPokemon(selectedPokemonId!)
-        : null;
+    $: selectedPokemon = (refreshKey, selectedPokemonId) ? adminDataStore.getEditedPokemon(selectedPokemonId!) : null;
 
     // Initialize on mount
     onMount(async () => {
-        await authStore.init();
+        if (!embedded) {
+            await authStore.init();
+        }
         adminDataStore.init();
 
-        // Render Google Sign-In button when needed
-        const unsubscribe = authStore.subscribe((state) => {
-            if (state.isInitialized && !state.isLoggedIn && googleButtonRef) {
-                setTimeout(() => {
-                    authStore.renderButton(googleButtonRef);
-                }, 100);
-            }
-        });
-
-        return unsubscribe;
+        // Render Google Sign-In button when needed (only when not embedded)
+        if (!embedded) {
+            const unsubscribe = authStore.subscribe(state => {
+                if (state.isInitialized && !state.isLoggedIn && googleButtonRef) {
+                    setTimeout(() => {
+                        authStore.renderButton(googleButtonRef);
+                    }, 100);
+                }
+            });
+            return unsubscribe;
+        }
     });
 
     // Type colors for badges
     function getTypeColor(type: string): string {
         const colors: Record<string, string> = {
-            normal: "#A8A878",
-            fire: "#F08030",
-            water: "#6890F0",
-            grass: "#78C850",
-            electric: "#F8D030",
-            ice: "#98D8D8",
-            fighting: "#C03028",
-            poison: "#A040A0",
-            ground: "#E0C068",
-            flying: "#A890F0",
-            psychic: "#F85888",
-            bug: "#A8B820",
-            rock: "#B8A038",
-            ghost: "#705898",
-            dragon: "#7038F8",
-            dark: "#705848",
-            steel: "#B8B8D0",
-            fairy: "#EE99AC",
+            normal: '#A8A878',
+            fire: '#F08030',
+            water: '#6890F0',
+            grass: '#78C850',
+            electric: '#F8D030',
+            ice: '#98D8D8',
+            fighting: '#C03028',
+            poison: '#A040A0',
+            ground: '#E0C068',
+            flying: '#A890F0',
+            psychic: '#F85888',
+            bug: '#A8B820',
+            rock: '#B8A038',
+            ghost: '#705898',
+            dragon: '#7038F8',
+            dark: '#705848',
+            steel: '#B8B8D0',
+            fairy: '#EE99AC',
         };
-        return colors[type.toLowerCase()] || "#777";
+        return colors[type.toLowerCase()] || '#777';
     }
 
     // Stat change handler
@@ -94,7 +93,7 @@
     // Add type
     function addType() {
         if (!selectedPokemon || selectedPokemon.types.length >= 2) return;
-        const newTypes = [...selectedPokemon.types, "normal"];
+        const newTypes = [...selectedPokemon.types, 'normal'];
         adminDataStore.updatePokemon(selectedPokemonId!, { types: newTypes });
         selectedPokemonId = selectedPokemonId;
     }
@@ -102,9 +101,7 @@
     // Remove type
     function removeType(index: number) {
         if (!selectedPokemon || selectedPokemon.types.length <= 1) return;
-        const newTypes = selectedPokemon.types.filter(
-            (_: string, i: number) => i !== index,
-        );
+        const newTypes = selectedPokemon.types.filter((_: string, i: number) => i !== index);
         adminDataStore.updatePokemon(selectedPokemonId!, { types: newTypes });
         selectedPokemonId = selectedPokemonId;
     }
@@ -112,9 +109,7 @@
     // Toggle treeSkill on a move
     function toggleTreeSkill(moveName: string) {
         if (!selectedPokemonId) return;
-        const move = selectedPokemon.moves.find(
-            (m: MoveEdit) => m.name === moveName,
-        );
+        const move = selectedPokemon.moves.find((m: MoveEdit) => m.name === moveName);
         if (move) {
             adminDataStore.updateMove(selectedPokemonId, moveName, {
                 treeSkill: !move.treeSkill,
@@ -124,20 +119,17 @@
     }
 
     // Branch options for skill tree assignment
-    const branches = ["hp", "atk", "def", "spAtk", "spDef", "speed"] as const;
+    const branches = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'speed'] as const;
 
     // Computed: Get all used slots for current Pokemon
     $: usedSlots =
-        selectedPokemon?.moves?.reduce(
-            (map: Map<string, string>, move: MoveEdit) => {
-                if (move.skillTreeSlot) {
-                    const key = `${move.skillTreeSlot.branch}-${move.skillTreeSlot.slotIndex}`;
-                    map.set(key, move.name);
-                }
-                return map;
-            },
-            new Map<string, string>(),
-        ) || new Map<string, string>();
+        selectedPokemon?.moves?.reduce((map: Map<string, string>, move: MoveEdit) => {
+            if (move.skillTreeSlot) {
+                const key = `${move.skillTreeSlot.branch}-${move.skillTreeSlot.slotIndex}`;
+                map.set(key, move.name);
+            }
+            return map;
+        }, new Map<string, string>()) || new Map<string, string>();
 
     // Set skill tree slot for a move with conflict check
     function setTreeSlot(moveName: string, branch: string, slotIndex: number) {
@@ -147,11 +139,7 @@
         const existingMove = usedSlots.get(slotKey);
 
         if (existingMove && existingMove !== moveName) {
-            if (
-                !confirm(
-                    `Slot "${branch} #${slotIndex}" is already assigned to "${existingMove}". Override?`,
-                )
-            ) {
+            if (!confirm(`Slot "${branch} #${slotIndex}" is already assigned to "${existingMove}". Override?`)) {
                 return;
             }
             // Clear the slot from the existing move
@@ -162,7 +150,7 @@
 
         adminDataStore.updateMove(selectedPokemonId, moveName, {
             skillTreeSlot: {
-                branch: branch as MoveEdit["skillTreeSlot"]["branch"],
+                branch: branch as MoveEdit['skillTreeSlot']['branch'],
                 slotIndex,
             },
         });
@@ -181,35 +169,35 @@
     // Get category color
     function getCategoryColor(category: string): string {
         switch (category?.toLowerCase()) {
-            case "physical":
-                return "#e74c3c";
-            case "special":
-                return "#9b59b6";
-            case "status":
-                return "#7f8c8d";
+            case 'physical':
+                return '#e74c3c';
+            case 'special':
+                return '#9b59b6';
+            case 'status':
+                return '#7f8c8d';
             default:
-                return "#555";
+                return '#555';
         }
     }
 
     // Get category icon
     function getCategoryIcon(category: string): string {
         switch (category?.toLowerCase()) {
-            case "physical":
-                return "💥";
-            case "special":
-                return "✨";
-            case "status":
-                return "📊";
+            case 'physical':
+                return '💥';
+            case 'special':
+                return '✨';
+            case 'status':
+                return '📊';
             default:
-                return "❓";
+                return '❓';
         }
     }
 
     // Compute starter count
     $: starterCount =
         (refreshKey,
-        allPokemon.filter((p) => {
+        allPokemon.filter(p => {
             const edited = adminDataStore.getEditedPokemon(p.id);
             return edited?.starter === true;
         }).length);
@@ -218,11 +206,11 @@
     $: starters =
         (refreshKey,
         allPokemon
-            .filter((p) => {
+            .filter(p => {
                 const edited = adminDataStore.getEditedPokemon(p.id);
                 return edited?.starter === true;
             })
-            .map((p) => p.name));
+            .map(p => p.name));
 
     // Toggle starter status
     function toggleStarter() {
@@ -232,9 +220,7 @@
 
         // If trying to add and already at max 3
         if (!currentValue && starterCount >= 3) {
-            alert(
-                `Maximum 3 starters allowed! Current starters: ${starters.join(", ")}`,
-            );
+            alert(`Maximum 3 starters allowed! Current starters: ${starters.join(', ')}`);
             return;
         }
 
@@ -246,39 +232,39 @@
 
     // All types for dropdown
     const allTypes = [
-        "normal",
-        "fire",
-        "water",
-        "grass",
-        "electric",
-        "ice",
-        "fighting",
-        "poison",
-        "ground",
-        "flying",
-        "psychic",
-        "bug",
-        "rock",
-        "ghost",
-        "dragon",
-        "dark",
-        "steel",
-        "fairy",
+        'normal',
+        'fire',
+        'water',
+        'grass',
+        'electric',
+        'ice',
+        'fighting',
+        'poison',
+        'ground',
+        'flying',
+        'psychic',
+        'bug',
+        'rock',
+        'ghost',
+        'dragon',
+        'dark',
+        'steel',
+        'fairy',
     ];
 </script>
 
-<div class="admin-container">
-    {#if !$authStore.isInitialized}
+<div class="admin-container" class:embedded>
+    {#if !embedded && !$authStore.isInitialized}
         <div class="loading">
             <h2>Loading...</h2>
         </div>
-    {:else if !$authStore.isLoggedIn}
+    {:else if !embedded && !$authStore.isLoggedIn}
         <div class="login-screen">
             <h1>🔒 Admin Panel</h1>
             <p>Sign in with Google to access the Pokedex editor</p>
             <div class="google-btn-container" bind:this={googleButtonRef}></div>
         </div>
-    {:else if !$authStore.isAdmin}
+    {:else if !embedded && !$authStore.isAdmin}
         <div class="access-denied">
             <h1>⛔ Access Denied</h1>
             <p>You are logged in as {$authStore.user?.email}</p>
@@ -287,50 +273,37 @@
         </div>
     {:else}
         <!-- Admin Panel -->
-        <header class="admin-header">
-            <h1>🎮 Pokedex Admin</h1>
-            <div class="header-actions">
-                <span class="edit-count">
-                    {adminDataStore.getEditCount()} Pokémon modified
-                </span>
-                <button
-                    class="export-btn"
-                    on:click={() => adminDataStore.downloadJson()}
-                >
-                    📥 Export JSON
-                </button>
-                <button
-                    class="clear-btn"
-                    on:click={() => {
-                        if (confirm("Clear all edits?"))
-                            adminDataStore.clearEdits();
-                    }}
-                >
-                    🗑️ Clear
-                </button>
-                <div class="user-info">
-                    <img src={$authStore.user?.picture} alt="" class="avatar" />
-                    <button on:click={() => authStore.signOut()}
-                        >Sign Out</button
+        {#if !embedded}
+            <header class="admin-header">
+                <h1>🎮 Pokedex Admin</h1>
+                <div class="header-actions">
+                    <span class="edit-count">
+                        {adminDataStore.getEditCount()} Pokémon modified
+                    </span>
+                    <button class="export-btn" on:click={() => adminDataStore.downloadJson()}> 📥 Export JSON </button>
+                    <button
+                        class="clear-btn"
+                        on:click={() => {
+                            if (confirm('Clear all edits?')) adminDataStore.clearEdits();
+                        }}
                     >
+                        🗑️ Clear
+                    </button>
+                    <div class="user-info">
+                        <img src={$authStore.user?.picture} alt="" class="avatar" />
+                        <button on:click={() => authStore.signOut()}>Sign Out</button>
+                    </div>
                 </div>
-            </div>
-        </header>
+            </header>
+        {/if}
 
         <div class="admin-content">
             <!-- Pokemon List -->
             <aside class="pokemon-list">
-                <input
-                    type="text"
-                    placeholder="Search Pokémon..."
-                    bind:value={searchQuery}
-                    class="search-input"
-                />
+                <input type="text" placeholder="Search Pokémon..." bind:value={searchQuery} class="search-input" />
                 <div class="list-scroll">
                     {#each filteredPokemon as pokemon}
-                        {@const pokemonData = adminDataStore.getEditedPokemon(
-                            pokemon.id,
-                        )}
+                        {@const pokemonData = adminDataStore.getEditedPokemon(pokemon.id)}
                         <button
                             class="pokemon-item"
                             class:selected={selectedPokemonId === pokemon.id}
@@ -341,21 +314,17 @@
                                 <span class="starter-star">⭐</span>
                             {/if}
                             <img
-                                src={pokedex.getSprite(pokemon.id, "front")}
+                                src={pokedex.getSprite(pokemon.id, 'front')}
                                 alt={pokemon.name}
                                 class="pokemon-sprite"
                             />
                             <span class="pokemon-name">
-                                #{pokemon.id.toString().padStart(3, "0")}
+                                #{pokemon.id.toString().padStart(3, '0')}
                                 {pokemon.name}
                             </span>
                             <div class="pokemon-types">
                                 {#each pokemon.types as type}
-                                    <span
-                                        class="type-badge"
-                                        style="background: {getTypeColor(type)}"
-                                        >{type}</span
-                                    >
+                                    <span class="type-badge" style="background: {getTypeColor(type)}">{type}</span>
                                 {/each}
                             </div>
                         </button>
@@ -368,25 +337,21 @@
                 <main class="pokemon-editor">
                     <div class="editor-header">
                         <img
-                            src={pokedex.getSprite(selectedPokemon.id, "front")}
+                            src={pokedex.getSprite(selectedPokemon.id, 'front')}
                             alt={selectedPokemon.name}
                             class="editor-sprite"
                         />
                         <div class="editor-title">
                             <h2>{selectedPokemon.name}</h2>
-                            <span class="pokemon-id"
-                                >#{selectedPokemon.id
-                                    .toString()
-                                    .padStart(3, "0")}</span
-                            >
+                            <span class="pokemon-id">#{selectedPokemon.id.toString().padStart(3, '0')}</span>
                         </div>
                         <button
                             class="starter-toggle"
                             class:active={selectedPokemon.starter === true}
                             on:click={toggleStarter}
                             title={starterCount >= 3 && !selectedPokemon.starter
-                                ? `Max 3 starters (${starters.join(", ")})`
-                                : "Toggle as game starter"}
+                                ? `Max 3 starters (${starters.join(', ')})`
+                                : 'Toggle as game starter'}
                         >
                             {#if selectedPokemon.starter}
                                 ⭐ STARTER
@@ -397,104 +362,64 @@
                     </div>
 
                     <nav class="editor-tabs">
-                        <button
-                            class:active={editTab === "stats"}
-                            on:click={() => (editTab = "stats")}>Stats</button
-                        >
-                        <button
-                            class:active={editTab === "types"}
-                            on:click={() => (editTab = "types")}>Types</button
-                        >
-                        <button
-                            class:active={editTab === "moves"}
-                            on:click={() => (editTab = "moves")}
-                            >Moves ({selectedPokemon.moves?.length ||
-                                0})</button
+                        <button class:active={editTab === 'stats'} on:click={() => (editTab = 'stats')}>Stats</button>
+                        <button class:active={editTab === 'types'} on:click={() => (editTab = 'types')}>Types</button>
+                        <button class:active={editTab === 'moves'} on:click={() => (editTab = 'moves')}
+                            >Moves ({selectedPokemon.moves?.length || 0})</button
                         >
                     </nav>
 
                     <div class="editor-content">
-                        {#if editTab === "stats"}
+                        {#if editTab === 'stats'}
                             <div class="stats-editor">
-                                {#each [{ key: "hp", label: "HP", color: "#ef4444" }, { key: "attack", label: "Attack", color: "#f97316" }, { key: "defense", label: "Defense", color: "#eab308" }, { key: "specialAttack", label: "Sp. Atk", color: "#3b82f6" }, { key: "specialDefense", label: "Sp. Def", color: "#22c55e" }, { key: "speed", label: "Speed", color: "#ec4899" }] as stat}
+                                {#each [{ key: 'hp', label: 'HP', color: '#ef4444' }, { key: 'attack', label: 'Attack', color: '#f97316' }, { key: 'defense', label: 'Defense', color: '#eab308' }, { key: 'specialAttack', label: 'Sp. Atk', color: '#3b82f6' }, { key: 'specialDefense', label: 'Sp. Def', color: '#22c55e' }, { key: 'speed', label: 'Speed', color: '#ec4899' }] as stat}
                                     <div class="stat-row">
-                                        <label style="color: {stat.color}"
-                                            >{stat.label}</label
-                                        >
+                                        <label style="color: {stat.color}">{stat.label}</label>
                                         <input
                                             type="number"
                                             min="1"
                                             max="255"
-                                            value={selectedPokemon.stats[
-                                                stat.key
-                                            ]}
-                                            on:change={(e) =>
-                                                handleStatChange(
-                                                    stat.key,
-                                                    parseInt(
-                                                        e.currentTarget.value,
-                                                    ),
-                                                )}
+                                            value={selectedPokemon.stats[stat.key]}
+                                            on:change={e => handleStatChange(stat.key, parseInt(e.currentTarget.value))}
                                         />
                                         <div class="stat-bar">
                                             <div
                                                 class="stat-fill"
                                                 style="width: {Math.min(
                                                     100,
-                                                    selectedPokemon.stats[
-                                                        stat.key
-                                                    ] / 2.55,
+                                                    selectedPokemon.stats[stat.key] / 2.55
                                                 )}%; background: {stat.color}"
                                             ></div>
                                         </div>
                                     </div>
                                 {/each}
                             </div>
-                        {:else if editTab === "types"}
+                        {:else if editTab === 'types'}
                             <div class="types-editor">
                                 {#each selectedPokemon.types as type, index}
                                     <div class="type-row">
                                         <select
                                             value={type}
-                                            on:change={(e) =>
-                                                handleTypeChange(
-                                                    index,
-                                                    e.currentTarget.value,
-                                                )}
+                                            on:change={e => handleTypeChange(index, e.currentTarget.value)}
                                         >
                                             {#each allTypes as t}
-                                                <option value={t}
-                                                    >{t
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                        t.slice(1)}</option
-                                                >
+                                                <option value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
                                             {/each}
                                         </select>
-                                        <span
-                                            class="type-preview"
-                                            style="background: {getTypeColor(
-                                                type,
-                                            )}">{type.toUpperCase()}</span
+                                        <span class="type-preview" style="background: {getTypeColor(type)}"
+                                            >{type.toUpperCase()}</span
                                         >
                                         {#if selectedPokemon.types.length > 1}
-                                            <button
-                                                class="remove-type-btn"
-                                                on:click={() =>
-                                                    removeType(index)}>✕</button
+                                            <button class="remove-type-btn" on:click={() => removeType(index)}>✕</button
                                             >
                                         {/if}
                                     </div>
                                 {/each}
                                 {#if selectedPokemon.types.length < 2}
-                                    <button
-                                        class="add-type-btn"
-                                        on:click={addType}
-                                        >+ Add Second Type</button
-                                    >
+                                    <button class="add-type-btn" on:click={addType}>+ Add Second Type</button>
                                 {/if}
                             </div>
-                        {:else if editTab === "moves"}
+                        {:else if editTab === 'moves'}
                             <div class="moves-editor">
                                 <!-- Show assigned slots summary -->
                                 {#if usedSlots.size > 0}
@@ -513,11 +438,7 @@
                                 {/if}
 
                                 {#each selectedPokemon.moves || [] as move}
-                                    {@const moveData = getMove(
-                                        move.name
-                                            .toLowerCase()
-                                            .replace(/-/g, "_"),
-                                    )}
+                                    {@const moveData = getMove(move.name.toLowerCase().replace(/-/g, '_'))}
                                     <div
                                         class="move-row"
                                         class:tree-skill={move.treeSkill}
@@ -525,59 +446,38 @@
                                     >
                                         <div class="move-info">
                                             <div class="move-name-row">
-                                                <span class="move-name"
-                                                    >{move.name}</span
-                                                >
+                                                <span class="move-name">{move.name}</span>
                                                 {#if moveData}
                                                     <span
                                                         class="move-category"
-                                                        style="background: {getCategoryColor(
-                                                            moveData.category,
-                                                        )}"
+                                                        style="background: {getCategoryColor(moveData.category)}"
                                                         title={moveData.category}
-                                                        >{getCategoryIcon(
-                                                            moveData.category,
-                                                        )}
+                                                        >{getCategoryIcon(moveData.category)}
                                                         {moveData.category}</span
                                                     >
                                                 {/if}
                                             </div>
                                             <div class="move-details">
-                                                <span class="move-level"
-                                                    >Lv.{move.level}</span
-                                                >
+                                                <span class="move-level">Lv.{move.level}</span>
                                                 {#if moveData}
                                                     <span
                                                         class="move-type"
-                                                        style="background: {getTypeColor(
-                                                            moveData.type,
-                                                        )}"
+                                                        style="background: {getTypeColor(moveData.type)}"
                                                         >{moveData.type}</span
                                                     >
                                                     <span class="move-power">
-                                                        {moveData.power
-                                                            ? `⚔️ ${moveData.power}`
-                                                            : "—"}
+                                                        {moveData.power ? `⚔️ ${moveData.power}` : '—'}
                                                     </span>
                                                     <span class="move-accuracy">
-                                                        {moveData.accuracy
-                                                            ? `🎯 ${moveData.accuracy}%`
-                                                            : "—"}
+                                                        {moveData.accuracy ? `🎯 ${moveData.accuracy}%` : '—'}
                                                     </span>
                                                 {/if}
                                             </div>
                                             {#if moveData?.description}
-                                                <div
-                                                    class="move-description"
-                                                    title={moveData.description}
-                                                >
-                                                    {moveData.description.slice(
-                                                        0,
-                                                        80,
-                                                    )}{moveData.description
-                                                        .length > 80
-                                                        ? "..."
-                                                        : ""}
+                                                <div class="move-description" title={moveData.description}>
+                                                    {moveData.description.slice(0, 80)}{moveData.description.length > 80
+                                                        ? '...'
+                                                        : ''}
                                                 </div>
                                             {/if}
                                         </div>
@@ -585,74 +485,36 @@
                                             <label class="tree-skill-toggle">
                                                 <input
                                                     type="checkbox"
-                                                    checked={move.treeSkill ||
-                                                        false}
-                                                    on:change={() =>
-                                                        toggleTreeSkill(
-                                                            move.name,
-                                                        )}
+                                                    checked={move.treeSkill || false}
+                                                    on:change={() => toggleTreeSkill(move.name)}
                                                 />
                                                 ⭐ Priority
                                             </label>
                                             <div class="tree-slot">
                                                 {#if move.skillTreeSlot}
-                                                    <span
-                                                        class="slot-badge assigned"
-                                                    >
-                                                        📍 {move.skillTreeSlot
-                                                            .branch} #{move
-                                                            .skillTreeSlot
-                                                            .slotIndex}
+                                                    <span class="slot-badge assigned">
+                                                        📍 {move.skillTreeSlot.branch} #{move.skillTreeSlot.slotIndex}
                                                     </span>
-                                                    <button
-                                                        class="clear-slot"
-                                                        on:click={() =>
-                                                            clearTreeSlot(
-                                                                move.name,
-                                                            )}>✕</button
+                                                    <button class="clear-slot" on:click={() => clearTreeSlot(move.name)}
+                                                        >✕</button
                                                     >
                                                 {:else}
                                                     <select
-                                                        on:change={(e) => {
-                                                            const [
-                                                                branch,
-                                                                slot,
-                                                            ] =
-                                                                e.currentTarget.value.split(
-                                                                    "-",
-                                                                );
-                                                            if (branch)
-                                                                setTreeSlot(
-                                                                    move.name,
-                                                                    branch,
-                                                                    parseInt(
-                                                                        slot,
-                                                                    ),
-                                                                );
+                                                        on:change={e => {
+                                                            const [branch, slot] = e.currentTarget.value.split('-');
+                                                            if (branch) setTreeSlot(move.name, branch, parseInt(slot));
                                                         }}
                                                     >
-                                                        <option value=""
-                                                            >📍 Assign slot...</option
-                                                        >
+                                                        <option value="">📍 Assign slot...</option>
                                                         {#each branches as branch}
-                                                            <optgroup
-                                                                label={branch.toUpperCase()}
-                                                            >
+                                                            <optgroup label={branch.toUpperCase()}>
                                                                 {#each [0, 1, 2] as slot}
                                                                     {@const slotKey = `${branch}-${slot}`}
-                                                                    {@const isUsed =
-                                                                        usedSlots.has(
-                                                                            slotKey,
-                                                                        )}
-                                                                    <option
-                                                                        value="{branch}-{slot}"
-                                                                        class:used={isUsed}
-                                                                    >
+                                                                    {@const isUsed = usedSlots.has(slotKey)}
+                                                                    <option value="{branch}-{slot}" class:used={isUsed}>
                                                                         {branch}
                                                                         #{slot}
-                                                                        {isUsed
-                                                                            ? `(${usedSlots.get(slotKey)})`
-                                                                            : ""}
+                                                                        {isUsed ? `(${usedSlots.get(slotKey)})` : ''}
                                                                     </option>
                                                                 {/each}
                                                             </optgroup>
@@ -664,9 +526,7 @@
                                     </div>
                                 {/each}
                                 {#if !selectedPokemon.moves?.length}
-                                    <p class="no-moves">
-                                        No moves defined for this Pokémon
-                                    </p>
+                                    <p class="no-moves">No moves defined for this Pokémon</p>
                                 {/if}
                             </div>
                         {/if}
@@ -688,8 +548,7 @@
         height: 100vh;
         background: #1a1a2e;
         color: white;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-            sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         display: flex;
         flex-direction: column;
     }
